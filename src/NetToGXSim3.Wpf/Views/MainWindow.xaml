@@ -4,9 +4,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="NetToGXSim3 v0.5.0 - Mitsubishi GX Works 3 Simulator Network Bridge by Ismail Lowkey" 
+        Title="NetToGXSim3 v0.5.3 - Mitsubishi GX Works 3 Simulator Network Bridge by Ismail Lowkey" 
         Icon="pack://application:,,,/Resources/app_icon.ico"
-        Height="700" Width="1100"
+        Height="780" Width="1180" 
+        MinHeight="680" MinWidth="980"
         WindowStartupLocation="CenterScreen"
         Background="#F1F5F9" Foreground="#0F172A">
 
@@ -98,6 +99,12 @@
                 <MenuItem Header="Toggle Inspector &amp; Log Tab" Click="MenuToggleLog_Click" />
                 <MenuItem Header="What's New" Click="MenuWhatsNew_Click" />
             </MenuItem>
+            <MenuItem Header="🚀 _My Apps" FontWeight="SemiBold">
+                <MenuItem Header="⚡ Mitsubishi Net To GXsim2" Click="MenuApp_NetToGXSim2_Click" FontWeight="Normal" />
+                <MenuItem Header="⚡ Mitsubishi Net To GXsim3" Click="MenuApp_NetToGXSim3_Click" FontWeight="Normal" />
+                <MenuItem Header="🔌 Omron Net To Cx Sim" Click="MenuApp_OmronNetToCXSim_Click" FontWeight="Normal" />
+                <MenuItem Header="💨 MPS Pneumatic Simulator" Click="MenuApp_MPSPneumaticSimulator_Click" FontWeight="Normal" />
+            </MenuItem>
             <MenuItem Header="🔄 Check for Updates" Click="MenuCheckUpdate_Click" FontWeight="SemiBold" Foreground="#0284C7"/>
             <MenuItem Header="✨ What's New" Click="MenuWhatsNew_Click" FontWeight="SemiBold" Foreground="#2563EB"/>
             <MenuItem Header="_Help">
@@ -119,7 +126,7 @@
 
                 <!-- Left: Application Info -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="NetToGXSim3 v0.5.0" FontSize="11" FontWeight="SemiBold" Foreground="#64748B"/>
+                    <TextBlock Text="NetToGXSim3 v0.5.3" FontSize="11" FontWeight="SemiBold" Foreground="#64748B"/>
                     <TextBlock Text=" • Mitsubishi GX Works 3 Network Bridge" FontSize="11" Foreground="#94A3B8" Margin="4,0,0,0"/>
                 </StackPanel>
 
@@ -151,7 +158,7 @@
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="NetToGXSim3" FontSize="22" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,10,0"/>
                                         <Border Background="#E0F2FE" CornerRadius="6" Padding="8,2" VerticalAlignment="Center" Margin="0,0,6,0">
-                                            <TextBlock Text="v0.5.0" FontSize="11" FontWeight="Bold" Foreground="#0369A1" />
+                                            <TextBlock Text="v0.5.3" FontSize="11" FontWeight="Bold" Foreground="#0369A1" />
                                         </Border>
                                         <Border Background="#F1F5F9" CornerRadius="6" Padding="8,2" VerticalAlignment="Center" Margin="0,0,6,0">
                                             <TextBlock Text="by Ismail Lowkey" FontSize="11" FontWeight="SemiBold" Foreground="#475569" />

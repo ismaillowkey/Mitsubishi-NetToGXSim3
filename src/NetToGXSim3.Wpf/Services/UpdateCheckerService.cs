@@ -21,9 +21,9 @@ namespace NetToGXSim3.Wpf.Services
         /// <summary>
         /// Versi rilis saat ini
         /// </summary>
-        public const string CurrentVersion = "0.5.0";
-        public const string ReleasesPageUrl = "https://github.com/ismaillowkey/Mitsubishi-NetToGX3Sim/releases";
-        public const string LatestReleaseApiUrl = "https://api.github.com/repos/ismaillowkey/Mitsubishi-NetToGX3Sim/releases/latest";
+        public const string CurrentVersion = "0.5.3";
+        public const string ReleasesPageUrl = "https://github.com/ismaillowkey/Mitsubishi-NetToGXSim3/releases";
+        public const string LatestReleaseApiUrl = "https://api.github.com/repos/ismaillowkey/Mitsubishi-NetToGXSim3/releases/latest";
 
         public static async Task<UpdateCheckResult> CheckForUpdatesAsync()
         {

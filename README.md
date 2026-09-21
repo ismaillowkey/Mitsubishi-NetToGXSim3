@@ -3,11 +3,11 @@
 **Mitsubishi GX Works 3 Simulator Network Protocol Bridge**  
 *Developed by Ismail Lowkey*
 
-[![Download Latest Release](https://img.shields.io/badge/Download-Latest%20Release%20(Installer)-brightgreen?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/ismaillowkey/Mitsubishi-NetToGX3Sim/releases/latest)
-[![GitHub Releases](https://img.shields.io/github/v/release/ismaillowkey/Mitsubishi-NetToGX3Sim?style=for-the-badge&logo=github&color=blue)](https://github.com/ismaillowkey/Mitsubishi-NetToGX3Sim/releases/latest)
+[![Download Latest Release](https://img.shields.io/badge/Download-Latest%20Release%20(Installer)-brightgreen?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/ismaillowkey/Mitsubishi-NetToGXSim3/releases/latest)
+[![GitHub Releases](https://img.shields.io/github/v/release/ismaillowkey/Mitsubishi-NetToGXSim3?style=for-the-badge&logo=github&color=blue)](https://github.com/ismaillowkey/Mitsubishi-NetToGXSim3/releases/latest)
 
-> ### 📥 **[Click Here to Download Latest Setup Installer (v0.5.0)](https://github.com/ismaillowkey/Mitsubishi-NetToGX3Sim/releases/latest)**
-> Get the ready-to-run Windows installer (`Setup_NetToGXSim3_v0.5.0.exe`) from GitHub Releases.
+> ### 📥 **[Click Here to Download Latest Setup Installer (v0.5.3)](https://github.com/ismaillowkey/Mitsubishi-NetToGXSim3/releases/latest)**
+> Get the ready-to-run Windows installer (`Setup_NetToGXSim3_v0.5.3.exe`) from GitHub Releases.
 
 [![Platform](https://img.shields.io/badge/Platform-Windows%20x86%20%7C%20x64-blue.svg)]()
 [![Framework](https://img.shields.io/badge/.NET%20Framework-4.7.2-purple.svg)]()
@@ -161,8 +161,8 @@ mc.batchwrite_wordunits(headdevice="D0", values=[1234])
 
 ```powershell
 # Clone the repository
-git clone https://github.com/ismaillowkey/Mitsubishi-NetToGX3Sim.git
-cd Mitsubishi-NetToGX3Sim
+git clone https://github.com/ismaillowkey/Mitsubishi-NetToGXSim3.git
+cd Mitsubishi-NetToGXSim3
 
 # Build the solution (x86 platform target)
 dotnet build NetToGXSim3.sln -c Release -p:Platform=x86
@@ -170,8 +170,8 @@ dotnet build NetToGXSim3.sln -c Release -p:Platform=x86
 # Publish binaries
 dotnet publish src/NetToGXSim3.Wpf/NetToGXSim3.Wpf.csproj -c Release -o publish
 
-# Create NSIS Installer (optional)
-create_installer.bat
+# Create NSIS Installer
+.\create_installer.bat
 ```
 
 ---
@@ -179,8 +179,8 @@ create_installer.bat
 ## 👤 Author & Support
 
 - **Developer**: Ismail Lowkey
-- **Repository**: [ismaillowkey/Mitsubishi-NetToGX3Sim](https://github.com/ismaillowkey/Mitsubishi-NetToGX3Sim)
-- **Version**: 0.5.0
+- **Repository**: [ismaillowkey/Mitsubishi-NetToGXSim3](https://github.com/ismaillowkey/Mitsubishi-NetToGXSim3)
+- **Version**: 0.5.3
 
 ---
 

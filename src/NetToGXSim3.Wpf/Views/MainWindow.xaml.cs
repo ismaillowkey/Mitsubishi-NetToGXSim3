@@ -725,6 +725,39 @@ namespace NetToGXSim3.Wpf.Views
             catch { }
         }
 
+        private static void OpenUrl(string url)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                });
+            }
+            catch { }
+        }
+
+        private void MenuApp_NetToGXSim2_Click(object sender, RoutedEventArgs e)
+        {
+            OpenUrl("https://github.com/ismaillowkey/Mitsubishi-NetToGXSim2");
+        }
+
+        private void MenuApp_NetToGXSim3_Click(object sender, RoutedEventArgs e)
+        {
+            OpenUrl("https://github.com/ismaillowkey/Mitsubishi-NetToGXSim3");
+        }
+
+        private void MenuApp_OmronNetToCXSim_Click(object sender, RoutedEventArgs e)
+        {
+            OpenUrl("https://github.com/ismaillowkey/OmronNetToCXSim");
+        }
+
+        private void MenuApp_MPSPneumaticSimulator_Click(object sender, RoutedEventArgs e)
+        {
+            OpenUrl("https://github.com/ismaillowkey/MPSPneumaticSimulator");
+        }
+
         private void MenuAbout_Click(object sender, RoutedEventArgs e)
         {
             MessageBox.Show($"NetToGXSim3 v{UpdateCheckerService.CurrentVersion}\nMitsubishi GX Works 3 Simulator Network Bridge\n\nDeveloped by Ismail Lowkey", "About NetToGXSim3", MessageBoxButton.OK, MessageBoxImage.Information);

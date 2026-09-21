@@ -52,7 +52,7 @@
                         </Border>
                         <TextBlock Text="Release Notes &amp; Changelog" FontSize="18" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
                         <Border Background="#E0F2FE" CornerRadius="6" Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="v0.5.0" FontSize="11" FontWeight="Bold" Foreground="#0284C7"/>
+                            <TextBlock Text="v0.5.3" FontSize="11" FontWeight="Bold" Foreground="#0284C7"/>
                         </Border>
                     </StackPanel>
                     <TextBlock Text="Explore new features, protocol enhancements, and architectural upgrades in NetToGXSim3." FontSize="12" Foreground="#64748B" Margin="38,4,0,0"/>
@@ -73,18 +73,53 @@
         <!-- Scrollable Release Notes Content -->
         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,16">
             <StackPanel>
-                <!-- Version 0.5.0 Card -->
+                <!-- Version 0.5.3 Card -->
                 <Border Background="#FFFFFF" CornerRadius="10" Padding="18" Margin="0,0,0,14" BorderBrush="#BAE6FD" BorderThickness="1.5">
                     <StackPanel>
                         <Grid Margin="0,0,0,12">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <Border Background="#0284C7" CornerRadius="6" Padding="8,3" Margin="0,0,10,0">
-                                    <TextBlock Text="v0.5.0" FontWeight="Bold" FontSize="12" Foreground="White"/>
+                                    <TextBlock Text="v0.5.3" FontWeight="Bold" FontSize="12" Foreground="White"/>
                                 </Border>
-                                <TextBlock Text="Direct GX Simulator 3 Connection (Zero-Config)" FontSize="14" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                                <TextBlock Text="Single-Instance Protection &amp; Quick App Navigation" FontSize="14" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
                                 <Border Background="#ECFDF5" CornerRadius="6" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
                                     <TextBlock Text="CURRENT" FontWeight="Bold" FontSize="10.5" Foreground="#059669"/>
                                 </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="🔒 Single-Instance Application Guard" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Integrated named Mutex protection ensures only one instance of NetToGXSim3 runs concurrently. If a second instance is launched, an informative error dialog is displayed to prevent COM port collisions and simulator driver conflicts." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="🚀 'My Apps' Ecosystem Menu Integration" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Added a dedicated 'My Apps' menu in the top navigation bar for one-click access to open-source companion tools: Mitsubishi Net To GXsim2, Net To GXsim3, Omron Net To Cx Sim, and MPS Pneumatic Simulator." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="⚡ Runtime Stability &amp; Resource Cleanup" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Enhanced graceful lifecycle shutdown routines for background socket listeners and STA COM apartment workers." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Version 0.5.1 Card -->
+                <Border Background="#FFFFFF" CornerRadius="10" Padding="18" Margin="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Background="#64748B" CornerRadius="6" Padding="8,3" Margin="0,0,10,0">
+                                    <TextBlock Text="v0.5.1" FontWeight="Bold" FontSize="12" Foreground="White"/>
+                                </Border>
+                                <TextBlock Text="Direct GX Simulator 3 Connection &amp; Official Repository Integration" FontSize="14" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Grid>
 

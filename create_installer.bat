@@ -2,7 +2,7 @@
 setlocal
 
 echo ======================================================================
-echo    NetToGXSim3 v0.5.0 - Build ^& Create Installer
+echo    NetToGXSim3 v0.5.3 - Build ^& Create Installer
 echo    Developed by: Ismail Lowkey
 echo ======================================================================
 echo.
@@ -51,7 +51,7 @@ if errorlevel 1 (
 echo.
 echo ======================================================================
 echo  [SUCCESS] Installer berhasil dibuat!
-echo  File: Setup_NetToGXSim3_v0.5.0.exe
+echo  File: Setup_NetToGXSim3_v0.5.3.exe
 echo ======================================================================
 echo.
 pause

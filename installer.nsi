@@ -1,21 +1,23 @@
 ; ==============================================================================
 ; NSIS Script: NetToGXSim3 Installer
-; Version: 0.5.0
+; Version: 0.5.3
 ; Developed by: Ismail Lowkey
 ; ==============================================================================
 
 !include "MUI2.nsh"
 !include "FileFunc.nsh"
+!include "LogicLib.nsh"
 
 ; --------------------------------------------------
 ; General Definitions
 ; --------------------------------------------------
 !define PRODUCT_NAME "NetToGXSim3 by Ismail Lowkey"
 !define PRODUCT_SHORT_NAME "NetToGXSim3"
-!define PRODUCT_VERSION "0.5.0"
+!define PRODUCT_VERSION "0.5.3"
 !define PRODUCT_PUBLISHER "Ismail Lowkey"
 !define MAIN_EXE "NetToGXSim3.Wpf.exe"
 !define REG_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\GX3Bridge"
+!define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\${MAIN_EXE}"
 
 Name "${PRODUCT_NAME}"
 OutFile "Setup_NetToGXSim3_v${PRODUCT_VERSION}.exe"
@@ -56,9 +58,52 @@ BrandingText "${PRODUCT_NAME} v${PRODUCT_VERSION}"
 !insertmacro MUI_LANGUAGE "English"
 
 ; --------------------------------------------------
+; Helper: Auto-Uninstall Old Versions
+; --------------------------------------------------
+Function AutoUninstallOldVersion
+    DetailPrint "Checking for previous installations..."
+    
+    ; Terminate running instance if open
+    ExecWait 'taskkill /F /IM ${MAIN_EXE}' $R0
+
+    ; Check registry for previous installation
+    ReadRegStr $R0 HKLM "${REG_KEY}" "UninstallString"
+    ${If} $R0 != ""
+        DetailPrint "Uninstalling previous version..."
+        ReadRegStr $R1 HKLM "${REG_KEY}" "InstallLocation"
+        ${If} $R1 == ""
+            StrCpy $R1 "$INSTDIR"
+        ${EndIf}
+        
+        ; Execute previous uninstaller silently and wait
+        ExecWait '$R0 /S _?=$R1' $R2
+        
+        ; Clean up previous shortcuts and old directory
+        Delete "$DESKTOP\NetToGXSim3.lnk"
+        Delete "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\NetToGXSim3.lnk"
+        Delete "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\Uninstall.lnk"
+        RMDir /r "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3"
+        RMDir /r "$R1"
+    ${EndIf}
+
+    ; Check if target directory already has old files
+    ${If} ${FileExists} "$INSTDIR\${MAIN_EXE}"
+        DetailPrint "Cleaning up existing installation folder..."
+        Delete "$DESKTOP\NetToGXSim3.lnk"
+        Delete "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\NetToGXSim3.lnk"
+        Delete "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\Uninstall.lnk"
+        RMDir /r "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3"
+        RMDir /r "$INSTDIR"
+    ${EndIf}
+FunctionEnd
+
+; --------------------------------------------------
 ; Installer Section
 ; --------------------------------------------------
 Section "MainSection" SEC01
+    ; Uninstall/clean previous version first
+    Call AutoUninstallOldVersion
+
     SetOutPath "$INSTDIR"
     SetOverwrite on
 
@@ -96,6 +141,10 @@ Section "MainSection" SEC01
     WriteRegDWORD HKLM "${REG_KEY}" "NoModify" 1
     WriteRegDWORD HKLM "${REG_KEY}" "NoRepair" 1
 
+    ; App Path for Shell Execution
+    WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "" "$INSTDIR\${MAIN_EXE}"
+    WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "Path" "$INSTDIR"
+
     ; Estimate install size in KB
     ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
     IntFmt $0 "0x%08X" $0
@@ -113,15 +162,13 @@ Section "Uninstall"
     Delete "$DESKTOP\NetToGXSim3.lnk"
     Delete "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\NetToGXSim3.lnk"
     Delete "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\Uninstall.lnk"
-    RMDir "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3"
+    RMDir /r "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3"
     RMDir "$SMPROGRAMS\MELSOFT NetToGXSim"
 
     ; Remove Installed Files
-    Delete "$INSTDIR\Resources\app_icon.ico"
-    RMDir "$INSTDIR\Resources"
-    Delete "$INSTDIR\*.*"
-    RMDir "$INSTDIR"
+    RMDir /r "$INSTDIR"
 
     ; Remove Registry Keys
     DeleteRegKey HKLM "${REG_KEY}"
+    DeleteRegKey HKLM "${PRODUCT_DIR_REGKEY}"
 SectionEnd
