@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <PlatformTarget>x86</PlatformTarget>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>NetToGXSim3.Wpf</RootNamespace>
+    <AssemblyName>NetToGXSim3.Wpf</AssemblyName>
+    <ApplicationIcon>Resources\app_icon.ico</ApplicationIcon>
+    <Version>0.5.0</Version>
+    <AssemblyVersion>0.5.0.0</AssemblyVersion>
+    <FileVersion>0.5.0.0</FileVersion>
+    <Product>NetToGXSim3 by Ismail Lowkey</Product>
+    <Company>Ismail Lowkey</Company>
+    <Authors>Ismail Lowkey</Authors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\app_icon.ico" />
+    <Resource Include="Resources\app_icon.png" />
+    <Resource Include="Resources\architecture_diagram.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NetToGXSim3.Core\NetToGXSim3.Core.csproj" />
+  </ItemGroup>
+
+</Project>

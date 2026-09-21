@@ -1,0 +1,186 @@
+<Window x:Class="NetToGXSim3.Wpf.Views.WhatsNewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="What's New - NetToGXSim3"
+        Icon="pack://application:,,,/Resources/app_icon.ico"
+        Height="580" Width="680"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#F8FAFC" Foreground="#0F172A">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="AccentBlue" Color="#0284C7"/>
+        <SolidColorBrush x:Key="TextDark" Color="#0F172A"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#64748B"/>
+        <SolidColorBrush x:Key="CardBorder" Color="#E2E8F0"/>
+
+        <Style x:Key="ModernButton" TargetType="Button">
+            <Setter Property="Background" Value="#0284C7"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Padding" Value="14,7"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Top Header Banner -->
+        <Border DockPanel.Dock="Top" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="20,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Background="#E0F2FE" CornerRadius="6" Width="28" Height="28" Margin="0,0,10,0">
+                            <TextBlock Text="✨" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="Release Notes &amp; Changelog" FontSize="18" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                        <Border Background="#E0F2FE" CornerRadius="6" Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="v0.5.0" FontSize="11" FontWeight="Bold" Foreground="#0284C7"/>
+                        </Border>
+                    </StackPanel>
+                    <TextBlock Text="Explore new features, protocol enhancements, and architectural upgrades in NetToGXSim3." FontSize="12" Foreground="#64748B" Margin="38,4,0,0"/>
+                </StackPanel>
+
+                <Button Grid.Column="1" Content="🌐 View on GitHub" Style="{StaticResource ModernButton}" Background="#0F172A" Padding="12,6" FontSize="11" VerticalAlignment="Center" Click="BtnViewGithub_Click"/>
+            </Grid>
+        </Border>
+
+        <!-- Bottom Action Bar -->
+        <Border DockPanel.Dock="Bottom" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="20,12">
+            <Grid>
+                <TextBlock Text="NetToGXSim3 • Developed by Ismail Lowkey" FontSize="11" Foreground="#94A3B8" VerticalAlignment="Center"/>
+                <Button Content="Close" Width="90" Style="{StaticResource ModernButton}" HorizontalAlignment="Right" Click="BtnClose_Click"/>
+            </Grid>
+        </Border>
+
+        <!-- Scrollable Release Notes Content -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,16">
+            <StackPanel>
+                <!-- Version 0.5.0 Card -->
+                <Border Background="#FFFFFF" CornerRadius="10" Padding="18" Margin="0,0,0,14" BorderBrush="#BAE6FD" BorderThickness="1.5">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Background="#0284C7" CornerRadius="6" Padding="8,3" Margin="0,0,10,0">
+                                    <TextBlock Text="v0.5.0" FontWeight="Bold" FontSize="12" Foreground="White"/>
+                                </Border>
+                                <TextBlock Text="Direct GX Simulator 3 Connection (Zero-Config)" FontSize="14" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                                <Border Background="#ECFDF5" CornerRadius="6" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="CURRENT" FontWeight="Bold" FontSize="10.5" Foreground="#059669"/>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="🚀 Direct Simulator Driver Engine (No MX Component Station Needed)" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Connects directly to the active GX Simulator 3 runtime (FSimRun3 / Sim3Dlg) without needing MX Component station setup or ActComm. Truly zero-configuration plug &amp; play out of the box." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="⚡ Multi-Mode Auto-Probe Architecture" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Intelligently auto-detects FX5U/FX5UJ/FX5S or iQ-R/Q/L simulation targets with instant failover and sub-millisecond memory read/write cycles." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="🛡️ Robust Diagnostic Logging &amp; Auto-Recovery" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Live connection diagnostics in the packet logger, automatic reconnection on simulator restart, and seamless STA COM dispatching." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Version 0.4.0 Card -->
+                <Border Background="#FFFFFF" CornerRadius="10" Padding="18" Margin="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Background="#64748B" CornerRadius="6" Padding="8,3" Margin="0,0,10,0">
+                                    <TextBlock Text="v0.4.0" FontWeight="Bold" FontSize="12" Foreground="White"/>
+                                </Border>
+                                <TextBlock Text="MC Protocol UDP Support &amp; Background Auto-Update" FontSize="14" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="⚡ Dedicated MC TCP &amp; UDP Binary Servers" FontWeight="Bold" FontSize="12" Foreground="#334155" Margin="0,0,0,3"/>
+                                <TextBlock Text="Independent Server 1 (TCP) and Server 2 (UDP) listen simultaneously on dedicated ports. HMIs, SCADA packages, and IoT clients connecting via UDP or TCP receive immediate, synchronized responses." FontSize="11.5" Foreground="#475569" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="🔄 Automated GitHub Update Checker" FontWeight="Bold" FontSize="12" Foreground="#334155" Margin="0,0,0,3"/>
+                                <TextBlock Text="Silently queries the GitHub Releases API upon startup. Real-time version status with an interactive update modal prompt." FontSize="11.5" Foreground="#475569" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="✍️ MC Protocol Random Write Support (0x1402)" FontWeight="Bold" FontSize="12" Foreground="#334155" Margin="0,0,0,3"/>
+                                <TextBlock Text="Full implementation for Command 0x1402 (scattered bit and word/dword write), guaranteeing smooth operation with HMI pushbuttons, numeric inputs, and alarms." FontSize="11.5" Foreground="#475569" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Version 0.3.0 Card -->
+                <Border Background="#FFFFFF" CornerRadius="10" Padding="18" Margin="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Background="#64748B" CornerRadius="6" Padding="8,3" Margin="0,0,10,0">
+                                    <TextBlock Text="v0.3.0" FontWeight="Bold" FontSize="12" Foreground="White"/>
+                                </Border>
+                                <TextBlock Text="Memory Mirror Engine &amp; Modern Industrial Dashboard" FontSize="14" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="🚀 High-Speed PlcMemoryMirror Architecture" FontWeight="Bold" FontSize="12" Foreground="#334155" Margin="0,0,0,3"/>
+                                <TextBlock Text="Optimized STA COM background cache mirror for instant sub-millisecond responses without thread deadlocks or COM contention." FontSize="11.5" Foreground="#475569" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="🎛️ Digital I/O Rack &amp; Traffic Inspector" FontWeight="Bold" FontSize="12" Foreground="#334155" Margin="0,0,0,3"/>
+                                <TextBlock Text="Interactive X0-X7 input toggle switches, glowing Y0-Y7 output LED indicators, on-demand device inspector, and live packet stream logger." FontSize="11.5" Foreground="#475569" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="🛑 GX Simulator 3 Process Cleaner" FontWeight="Bold" FontSize="12" Foreground="#334155" Margin="0,0,0,3"/>
+                                <TextBlock Text="One-click termination for background simulator processes (FSim3Dlg, FSimRun3, Sim3Dlg, IOSystem) directly from the UI." FontSize="11.5" Foreground="#475569" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>
