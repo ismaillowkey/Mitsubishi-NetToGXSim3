@@ -3,17 +3,21 @@
 **Mitsubishi GX Works 3 Simulator Network Protocol Bridge**  
 *Developed by Ismail Lowkey*
 
-[![Download Latest Release](https://img.shields.io/badge/Download-Latest%20Release%20(Installer)-brightgreen?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/ismaillowkey/Mitsubishi-NetToGXSim3/releases/latest)
-[![GitHub Releases](https://img.shields.io/github/v/release/ismaillowkey/Mitsubishi-NetToGXSim3?style=for-the-badge&logo=github&color=blue)](https://github.com/ismaillowkey/Mitsubishi-NetToGXSim3/releases/latest)
-
-> ### 📥 **[Click Here to Download Latest Setup Installer (v0.5.3)](https://github.com/ismaillowkey/Mitsubishi-NetToGXSim3/releases/latest)**
-> Get the ready-to-run Windows installer (`Setup_NetToGXSim3_v0.5.3.exe`) from GitHub Releases.
-
-[![Platform](https://img.shields.io/badge/Platform-Windows%20x86%20%7C%20x64-blue.svg)]()
+[![Platform](https://img.shields.io/badge/Platform-Windows%20x86%20%7C%20x64-007acc.svg)]()
 [![Framework](https://img.shields.io/badge/.NET%20Framework-4.7.2-purple.svg)]()
 [![Target](https://img.shields.io/badge/Target-MELSOFT%20GX%20Simulator%203-red.svg)]()
-[![Protocol](https://img.shields.io/badge/Protocol-MC%20Protocol%20(3E%20%26%201E)-green.svg)]()
-[![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)]()
+[![Protocol](https://img.shields.io/badge/Protocol-MC%20Protocol%20(3E%20%26%201E%20TCP%2FUDP)-green.svg)]()
+[![License](https://img.shields.io/badge/License-MIT-gray.svg)]()
+
+---
+
+## 📥 Download Installer Terbaru
+
+Unduh installer setup versi terbaru pada halaman [GitHub Releases](https://github.com/ismaillowkey/Mitsubishi-NetToGXSim3/releases/latest):
+
+| Berkas | Platform | Tautan Unduhan |
+| :--- | :--- | :--- |
+| **NetToGXSim3 (Setup Installer)** | Windows 7 / 8 / 10 / 11 (32-bit / 64-bit) | [Download Setup (.exe)](https://github.com/ismaillowkey/Mitsubishi-NetToGXSim3/releases/latest) |
 
 ---
 
