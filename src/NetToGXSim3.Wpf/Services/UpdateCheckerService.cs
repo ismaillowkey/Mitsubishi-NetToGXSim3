@@ -19,9 +19,9 @@ namespace NetToGXSim3.Wpf.Services
     public static class UpdateCheckerService
     {
         /// <summary>
-        /// Versi rilis saat ini
+        /// Current release version
         /// </summary>
-        public const string CurrentVersion = "0.5.3";
+        public static string CurrentVersion => AppVersion.Version;
         public const string ReleasesPageUrl = "https://github.com/ismaillowkey/Mitsubishi-NetToGXSim3/releases";
         public const string LatestReleaseApiUrl = "https://api.github.com/repos/ismaillowkey/Mitsubishi-NetToGXSim3/releases/latest";
 

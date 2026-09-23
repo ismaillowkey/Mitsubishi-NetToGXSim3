@@ -1,6 +1,6 @@
 ; ==============================================================================
 ; NSIS Script: NetToGXSim3 Installer
-; Version: 0.5.3
+; Version: 0.6.1
 ; Developed by: Ismail Lowkey
 ; ==============================================================================
 
@@ -13,7 +13,9 @@
 ; --------------------------------------------------
 !define PRODUCT_NAME "NetToGXSim3 by Ismail Lowkey"
 !define PRODUCT_SHORT_NAME "NetToGXSim3"
-!define PRODUCT_VERSION "0.5.3"
+!ifndef PRODUCT_VERSION
+  !define PRODUCT_VERSION "0.6.1"
+!endif
 !define PRODUCT_PUBLISHER "Ismail Lowkey"
 !define MAIN_EXE "NetToGXSim3.Wpf.exe"
 !define REG_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\GX3Bridge"

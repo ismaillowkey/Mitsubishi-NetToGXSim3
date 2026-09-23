@@ -13,6 +13,7 @@ namespace NetToGXSim3.Wpf.Views
         public WhatsNewWindow()
         {
             InitializeComponent();
+            TxtHeaderVersion.Text = AppVersion.DisplayVersion;
         }
 
         private void BtnClose_Click(object sender, RoutedEventArgs e)

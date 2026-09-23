@@ -32,40 +32,30 @@ namespace NetToGXSim3.Wpf
                 isMutexOwned = false;
             }
 
-            // Pengecekan proses ganda (mendeteksi juga jika ada instance NetToGXSim3 versi lama yang sedang berjalan)
-            var currentProcess = Process.GetCurrentProcess();
-            var runningInstances = Process.GetProcessesByName(currentProcess.ProcessName);
-            bool isDuplicateProcess = false;
-
-            foreach (var proc in runningInstances)
+            // Single-instance verification using Named Mutex
+            if (!isMutexOwned)
             {
-                if (proc.Id != currentProcess.Id)
+                // Find existing NetToGXSim3 instance and bring it to the foreground
+                try
                 {
-                    isDuplicateProcess = true;
-                    // Bawa window instance yang sedang berjalan ke layar depan
-                    if (proc.MainWindowHandle != IntPtr.Zero)
+                    var runningInstances = Process.GetProcessesByName("NetToGXSim3.Wpf");
+                    foreach (var proc in runningInstances)
                     {
-                        ShowWindowAsync(proc.MainWindowHandle, SW_RESTORE);
-                        SetForegroundWindow(proc.MainWindowHandle);
+                        if (proc.Id != Process.GetCurrentProcess().Id && proc.MainWindowHandle != IntPtr.Zero)
+                        {
+                            ShowWindowAsync(proc.MainWindowHandle, SW_RESTORE);
+                            SetForegroundWindow(proc.MainWindowHandle);
+                            break;
+                        }
                     }
-                    break;
                 }
-            }
+                catch { }
 
-            if (!isMutexOwned || isDuplicateProcess)
-            {
                 MessageBox.Show(
-                    "Aplikasi NetToGXSim3 sudah berjalan!\n\nHanya 1 instance yang diperbolehkan aktif pada saat yang sama.",
-                    "NetToGXSim3 - Sudah Berjalan",
+                    "NetToGXSim3 is already running!\n\nOnly one active instance is allowed at a time.",
+                    "NetToGXSim3 - Already Running",
                     MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-
-                if (_appMutex != null && isMutexOwned)
-                {
-                    try { _appMutex.ReleaseMutex(); } catch { }
-                    _appMutex.Dispose();
-                }
-                _appMutex = null;
+                    MessageBoxImage.Information);
 
                 Shutdown();
                 return;
@@ -84,7 +74,7 @@ namespace NetToGXSim3.Wpf
                 }
                 catch
                 {
-                    // Abaikan jika mutex sudah dilepas atau dihentikan paksa
+                    // Ignore if mutex was already released or terminated
                 }
                 _appMutex.Dispose();
                 _appMutex = null;

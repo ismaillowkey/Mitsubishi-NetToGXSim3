@@ -184,7 +184,7 @@ dotnet publish src/NetToGXSim3.Wpf/NetToGXSim3.Wpf.csproj -c Release -o publish
 
 - **Developer**: Ismail Lowkey
 - **Repository**: [ismaillowkey/Mitsubishi-NetToGXSim3](https://github.com/ismaillowkey/Mitsubishi-NetToGXSim3)
-- **Version**: 0.5.3
+- **Version**: 0.6.3
 
 ---
 

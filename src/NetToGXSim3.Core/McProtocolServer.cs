@@ -934,13 +934,18 @@ namespace NetToGXSim3.Core
                 case 0x5820: case 0x58: case 0x9C: return "X";
                 case 0x5920: case 0x59: case 0x9D: return "Y";
                 case 0x4D20: case 0x4D: case 0x90: return "M";
-                case 0x4420: case 0x44: case 0xA8: return "D";
+                case 0x91: return "SM";
+                case 0x92: return "L";
+                case 0x93: return "F";
                 case 0x5320: case 0x53: case 0x98: return "S";
-                case 0x5420: case 0x54: case 0xC2: case 0xC0: case 0xC1: return "T";
-                case 0x4320: case 0x43: case 0xC5: case 0xC3: case 0xC4: return "C";
+                case 0x99: return "B";
+                case 0x4420: case 0x44: case 0xA8: return "D";
+                case 0xA9: return "SD";
                 case 0xB4: return "W";
                 case 0xAF: return "R";
                 case 0xB0: return "ZR";
+                case 0x5420: case 0x54: case 0xC2: case 0xC0: case 0xC1: return "T";
+                case 0x4320: case 0x43: case 0xC5: case 0xC3: case 0xC4: return "C";
                 default: return "D";
             }
         }

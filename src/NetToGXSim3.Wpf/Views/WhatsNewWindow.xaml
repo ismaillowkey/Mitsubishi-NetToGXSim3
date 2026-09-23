@@ -52,7 +52,7 @@
                         </Border>
                         <TextBlock Text="Release Notes &amp; Changelog" FontSize="18" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
                         <Border Background="#E0F2FE" CornerRadius="6" Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="v0.5.3" FontSize="11" FontWeight="Bold" Foreground="#0284C7"/>
+                            <TextBlock x:Name="TxtHeaderVersion" FontSize="11" FontWeight="Bold" Foreground="#0284C7"/>
                         </Border>
                     </StackPanel>
                     <TextBlock Text="Explore new features, protocol enhancements, and architectural upgrades in NetToGXSim3." FontSize="12" Foreground="#64748B" Margin="38,4,0,0"/>
@@ -73,18 +73,137 @@
         <!-- Scrollable Release Notes Content -->
         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,16">
             <StackPanel>
-                <!-- Version 0.5.3 Card -->
+                <!-- Version 0.6.3 Card -->
                 <Border Background="#FFFFFF" CornerRadius="10" Padding="18" Margin="0,0,0,14" BorderBrush="#BAE6FD" BorderThickness="1.5">
                     <StackPanel>
                         <Grid Margin="0,0,0,12">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <Border Background="#0284C7" CornerRadius="6" Padding="8,3" Margin="0,0,10,0">
-                                    <TextBlock Text="v0.5.3" FontWeight="Bold" FontSize="12" Foreground="White"/>
+                                    <TextBlock Text="v0.6.3" FontWeight="Bold" FontSize="12" Foreground="White"/>
                                 </Border>
-                                <TextBlock Text="Single-Instance Protection &amp; Quick App Navigation" FontSize="14" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                                <TextBlock Text="Rolling Log Buffer &amp; High-Performance Traffic Management" FontSize="14" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
                                 <Border Background="#ECFDF5" CornerRadius="6" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
                                     <TextBlock Text="CURRENT" FontWeight="Bold" FontSize="10.5" Foreground="#059669"/>
                                 </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="⚡ 500-Line Rolling Traffic Buffer" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Realtime network activity and MC packet stream log is now capped at 500 lines. The oldest records are automatically pruned as new packets arrive, preventing memory accumulation and eliminating UI slowdowns." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="🚀 High-Speed UI Thread Efficiency" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Optimized sub-millisecond string truncation guarantees silky-smooth, flicker-free UI rendering even under dense 50+ requests/sec continuous polling from HMI and SCADA clients." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Version 0.6.2 Card -->
+                <Border Background="#FFFFFF" CornerRadius="10" Padding="18" Margin="0,0,0,14" BorderBrush="#E2E8F0" BorderThickness="1">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Background="#64748B" CornerRadius="6" Padding="8,3" Margin="0,0,10,0">
+                                    <TextBlock Text="v0.6.2" FontWeight="Bold" FontSize="12" Foreground="White"/>
+                                </Border>
+                                <TextBlock Text="Automated Centralized Versioning &amp; Architecture Modernization" FontSize="14" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="📦 Single Source of Truth Versioning" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Centralized build versioning across all assemblies via Directory.Build.props. Application UI badges, window titles, and update checker now resolve versions dynamically from assembly metadata." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="⚙️ Automated Dynamic Installer Pipeline" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Upgraded NSIS build script to extract assembly versioning directly from compiled binaries, ensuring synchronized installer package outputs." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Version 0.6.1 Card -->
+                <Border Background="#FFFFFF" CornerRadius="10" Padding="18" Margin="0,0,0,14" BorderBrush="#E2E8F0" BorderThickness="1">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Background="#64748B" CornerRadius="6" Padding="8,3" Margin="0,0,10,0">
+                                    <TextBlock Text="v0.6.1" FontWeight="Bold" FontSize="12" Foreground="White"/>
+                                </Border>
+                                <TextBlock Text="Authoritative Memory Mapping &amp; Data Register Persistence" FontSize="14" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="🎯 Exact D &amp; M Register Memory Mapping" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Extracted authoritative device offsets directly from FSimRun3/FX5U.dll runtime tables: D0–D7999 at 0x061A50 (16 KB) and M0–M4095 at 0x066408 (512 B). Resolved issue where writing odd values to D0 was cleared by simulator internal alignment flags." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="🔒 Persistent Device Value Synchronization" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Values written to Data Registers (D) and Internal Relays (M) from external MC protocol clients (HMI, SCADA, Python) now remain persistent and immediately reflect in GX Works 3 Watch windows without reverting." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Version 0.6.0 Card -->
+                <Border Background="#FFFFFF" CornerRadius="10" Padding="18" Margin="0,0,0,14" BorderBrush="#E2E8F0" BorderThickness="1">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Background="#64748B" CornerRadius="6" Padding="8,3" Margin="0,0,10,0">
+                                    <TextBlock Text="v0.6.0" FontWeight="Bold" FontSize="12" Foreground="White"/>
+                                </Border>
+                                <TextBlock Text="Pure On-Demand MC Protocol &amp; Bidirectional Force Synchronization" FontSize="14" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="⚡ Pure On-Demand MC Protocol Server" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="All MC TCP and UDP read/write requests (e.g. M0, D0, X, Y) now bypass background cache mirrors and execute directly against live simulator shared memory on demand with instantaneous sub-microsecond response." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="🔄 Bidirectional GX Works 3 Force Table Synchronization" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Resolved simulator latch lock where inputs forced ON inside GX Works 3 (Shift+Enter) could not be turned OFF from external tools. The engine now synchronizes Base RAM, Simulation Force Latch, and ASIC images." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="🚀 Direct GXS-IO Memory Bridge Optimization" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Optimized direct block word and bit access paths without COM apartment dispatch, enabling ultra-high-speed polling and zero CPU overhead." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Version 0.5.3 Card -->
+                <Border Background="#FFFFFF" CornerRadius="10" Padding="18" Margin="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Background="#64748B" CornerRadius="6" Padding="8,3" Margin="0,0,10,0">
+                                    <TextBlock Text="v0.5.3" FontWeight="Bold" FontSize="12" Foreground="White"/>
+                                </Border>
+                                <TextBlock Text="Single-Instance Protection &amp; Quick App Navigation" FontSize="14" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Grid>
 

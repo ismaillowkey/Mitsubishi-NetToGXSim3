@@ -1,8 +1,8 @@
 @echo off
-setlocal
+setlocal enabledelayedexpansion
 
 echo ======================================================================
-echo    NetToGXSim3 v0.5.3 - Build ^& Create Installer
+echo    NetToGXSim3 - Automated Build ^& Create Installer
 echo    Developed by: Ismail Lowkey
 echo ======================================================================
 echo.
@@ -10,19 +10,25 @@ echo.
 cd /d "%~dp0"
 
 :: 1. Publish WPF Application in Release Mode
-echo [1/3] Mem-publish aplikasi dalam mode Release...
+echo [1/3] Publishing WPF application in Release mode...
 dotnet publish "src\NetToGXSim3.Wpf\NetToGXSim3.Wpf.csproj" -c Release -o "publish"
 if errorlevel 1 (
     echo.
-    echo [ERROR] Gagal mem-publish proyek WPF! Silakan periksa error di atas.
+    echo [ERROR] Failed to publish WPF project! Please check the build errors above.
     pause
     exit /b 1
 )
-echo [OK] Publish selesai di folder publish.
+echo [OK] Publish completed successfully in publish directory.
 echo.
 
-:: 2. Cari compiler NSIS
-echo [2/3] Mencari NSIS Compiler makensis.exe...
+:: Extract Product Version dynamically from the published binary (Single Source of Truth)
+for /f "usebackq tokens=*" %%v in (`powershell -NoProfile -Command "(Get-Item 'publish\NetToGXSim3.Wpf.exe').VersionInfo.ProductVersion.Split('+')[0].Trim()"`) do set "APP_VERSION=%%v"
+if not defined APP_VERSION set "APP_VERSION=0.6.1"
+echo [VERSION] Detected Application Version: %APP_VERSION%
+echo.
+
+:: 2. Locate NSIS Compiler
+echo [2/3] Locating NSIS Compiler makensis.exe...
 set "NSIS_PATH="
 
 if exist "C:\Program Files (x86)\NSIS\makensis.exe" set "NSIS_PATH=C:\Program Files (x86)\NSIS\makensis.exe"
@@ -35,23 +41,23 @@ if not defined NSIS_PATH (
 
 if not defined NSIS_PATH goto :NsisNotFound
 
-echo [OK] Menggunakan NSIS di: "%NSIS_PATH%"
+echo [OK] Found NSIS compiler at: "%NSIS_PATH%"
 echo.
 
-:: 3. Compile installer dengan NSIS
-echo [3/3] Meng-compile installer.nsi...
-"%NSIS_PATH%" /V2 "installer.nsi"
+:: 3. Compile installer with NSIS passing dynamic version
+echo [3/3] Compiling installer.nsi for v%APP_VERSION%...
+"%NSIS_PATH%" /V2 /DPRODUCT_VERSION="%APP_VERSION%" "installer.nsi"
 if errorlevel 1 (
     echo.
-    echo [ERROR] Gagal membuat installer dengan NSIS!
+    echo [ERROR] Failed to build installer with NSIS!
     pause
     exit /b 1
 )
 
 echo.
 echo ======================================================================
-echo  [SUCCESS] Installer berhasil dibuat!
-echo  File: Setup_NetToGXSim3_v0.5.3.exe
+echo  [SUCCESS] Installer package generated successfully!
+echo  File: Setup_NetToGXSim3_v%APP_VERSION%.exe
 echo ======================================================================
 echo.
 pause
@@ -59,8 +65,8 @@ exit /b 0
 
 :NsisNotFound
 echo.
-echo [ERROR] NSIS compiler makensis.exe tidak ditemukan!
-echo Silakan install NSIS dari https://nsis.sourceforge.io/
-echo atau pastikan makensis.exe terpasang di Program Files.
+echo [ERROR] NSIS compiler makensis.exe was not found!
+echo Please install NSIS from https://nsis.sourceforge.io/
+echo or ensure makensis.exe is added to your system PATH or Program Files.
 pause
 exit /b 1

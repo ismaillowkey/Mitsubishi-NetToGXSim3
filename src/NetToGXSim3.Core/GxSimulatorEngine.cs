@@ -1,11 +1,17 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace NetToGXSim3.Core
 {
+    /// <summary>
+    /// Mitsubishi GX Simulator 3 Engine Bridge.
+    /// Communicates directly with GX Simulator 3 (FX5U / FX5UJ / FX5S / iQ-R / L)
+    /// to read and write live PLC devices (X, Y, M, D, R, W, TN, CN).
+    /// </summary>
     public class GxSimulatorEngine : IDisposable
     {
         private dynamic? _comObject;
@@ -16,16 +22,22 @@ namespace NetToGXSim3.Core
         public bool IsConnected { get; private set; }
         public int LogicalStationNumber { get; set; } = 1;
         public string LastError { get; private set; } = string.Empty;
+        public string ConnectedEngineName { get; private set; } = string.Empty;
 
         public PlcMemoryMirror MemoryMirror { get; }
+        public GxSimMemoryBridge MemoryBridge { get; }
 
         public event Action<string>? LogMessage;
+        public event Action<bool>? ConnectionStateChanged;
 
         public GxSimulatorEngine(int logicalStationNumber = 1)
         {
             LogicalStationNumber = logicalStationNumber;
             MemoryMirror = new PlcMemoryMirror(this);
             MemoryMirror.LogMessage += (msg) => LogMessage?.Invoke(msg);
+
+            MemoryBridge = new GxSimMemoryBridge();
+            MemoryBridge.LogMessage += (msg) => LogMessage?.Invoke(msg);
 
             _staThread = new Thread(StaThreadLoop)
             {
@@ -100,65 +112,22 @@ namespace NetToGXSim3.Core
                 DisconnectInternal();
                 try
                 {
-                    // 1. Direct GX Simulator 3 Connection (Zero-Configuration, no MX Component Station needed)
-                    Type? progType = Type.GetTypeFromProgID("ActProgType.ActProgType");
-                    if (progType != null)
-                    {
-                        dynamic? prog = Activator.CreateInstance(progType);
-                        if (prog != null)
-                        {
-                            // UnitType 0x30 (Direct GX Simulator 3 Engine Interface)
-                            int[] unitTypes = new int[] { 0x30, 0x1A, 0x0D };
-                            int[] cpuTypes = new int[] { 0x0212, 0x0210, 0x0211, 0x0110, 0x00A0, 0x0201 };
+                    // Detect running GX Simulator 3 processes
+                    string procName = "GX Simulator 3";
+                    if (Process.GetProcessesByName("FSimRun3").Length > 0) procName = "FSimRun3 (FX5U)";
+                    else if (Process.GetProcessesByName("RSimRun3").Length > 0) procName = "RSimRun3 (iQ-R)";
+                    else if (Process.GetProcessesByName("LSimRun3").Length > 0) procName = "LSimRun3 (L)";
+                    else if (Process.GetProcessesByName("FSim3Dlg").Length > 0) procName = "FSim3Dlg";
 
-                            foreach (int u in unitTypes)
-                            {
-                                foreach (int cpu in cpuTypes)
-                                {
-                                    for (int sim = 0; sim <= 1; sim++)
-                                    {
-                                        try
-                                        {
-                                            prog.ActUnitType = u;
-                                            prog.ActCpuType = cpu;
-                                            prog.ActTargetSimulator = sim;
-                                            prog.ActProtocolType = 0;
-                                            prog.ActPortNumber = 0;
-                                            prog.ActTimeOut = 1500;
-
-                                            int res = (int)prog.Open();
-                                            if (res == 0)
-                                            {
-                                                _comObject = prog;
-                                                IsConnected = true;
-                                                LastError = string.Empty;
-                                                LogMessage?.Invoke($"[GX SIM] Connected directly to GX Simulator 3 (Direct Mode: Unit=0x{u:X2}, CPU=0x{cpu:X4})");
-                                                if (MemoryMirror != null && MemoryMirror.IsActive)
-                                                {
-                                                    MemoryMirror.Start();
-                                                }
-                                                return true;
-                                            }
-                                        }
-                                        catch { }
-                                    }
-                                }
-                            }
-
-                            // If direct probe didn't connect, release prog instance
-                            try { Marshal.ReleaseComObject(prog); } catch { }
-                        }
-                    }
-
-                    // 2. Fallback to ActUtlType (Logical Station Mode)
+                    // 1. Try ActUtlType (if MX Component is installed)
                     Type? utlType = Type.GetTypeFromProgID("ActUtlType.ActUtlType") ?? Type.GetTypeFromProgID("ActUtlType.ActUtlType.1");
                     if (utlType != null)
                     {
                         dynamic? utl = Activator.CreateInstance(utlType);
                         if (utl != null)
                         {
-                            int[] stationsToTry = new int[] { LogicalStationNumber, 1, 2, 3, 4, 5 };
-                            foreach (int st in stationsToTry)
+                            int[] stations = new int[] { LogicalStationNumber, 1, 2, 3, 4, 5 };
+                            foreach (int st in stations)
                             {
                                 try
                                 {
@@ -169,8 +138,9 @@ namespace NetToGXSim3.Core
                                         _comObject = utl;
                                         LogicalStationNumber = st;
                                         IsConnected = true;
+                                        ConnectedEngineName = $"{procName} [Station {st}]";
                                         LastError = string.Empty;
-                                        LogMessage?.Invoke($"[GX SIM] Connected to GX Simulator 3 (Station {st})");
+                                        LogMessage?.Invoke($"[GX SIM] Connected to GX Simulator 3 via Station {st} ({procName})");
                                         if (MemoryMirror != null && MemoryMirror.IsActive)
                                         {
                                             MemoryMirror.Start();
@@ -184,8 +154,21 @@ namespace NetToGXSim3.Core
                         }
                     }
 
+                    // 2. Direct GX Simulator 3 Native GXS-IO Engine (Zero external dependencies)
+                    if (MemoryBridge.Attach(1, 1) || MemoryBridge.Attach(0, 1))
+                    {
+                        IsConnected = true;
+                        ConnectedEngineName = $"{procName} (Direct GXS-IO Engine)";
+                        LastError = string.Empty;
+                        MemoryMirror?.Stop(); // Pure On-Demand: Direct memory access on every MC request without polling cache
+                        LogMessage?.Invoke($"[GX SIM] Connected directly to {ConnectedEngineName} (Pure On-Demand MC Protocol)");
+                        ConnectionStateChanged?.Invoke(true);
+                        return true;
+                    }
+
+
                     IsConnected = false;
-                    LastError = "Could not connect to GX Simulator 3. Make sure simulation is running in GX Works 3.";
+                    LastError = "Could not connect to GX Simulator 3. Make sure GX Works 3 Simulation is running.";
                     LogMessage?.Invoke($"[WARNING] {LastError}");
                     return false;
                 }
@@ -207,6 +190,7 @@ namespace NetToGXSim3.Core
         private void DisconnectInternal()
         {
             MemoryMirror?.Stop();
+            MemoryBridge?.Detach();
 
             if (_comObject != null && IsConnected)
             {
@@ -224,34 +208,85 @@ namespace NetToGXSim3.Core
             }
 
             IsConnected = false;
-            LogMessage?.Invoke("[GX SIM] Disconnected from GX Simulator");
+            ConnectedEngineName = string.Empty;
+            ConnectionStateChanged?.Invoke(false);
         }
 
-        /// <summary>
-        /// Direct COM block read used by PlcMemoryMirror background sync loop.
-        /// </summary>
+        public bool CheckConnectionAlive()
+        {
+            if (!IsConnected) return false;
+
+            if (MemoryBridge.IsAttached)
+            {
+                bool isAlive = MemoryBridge.CheckIsAlive();
+                if (!isAlive)
+                {
+                    IsConnected = false;
+                    ConnectedEngineName = string.Empty;
+                    LastError = "GX Simulator 3 process was terminated or stopped.";
+                    LogMessage?.Invoke("[GX SIM] GX Simulator 3 has stopped (OFF). Waiting for simulation to restart...");
+                    ConnectionStateChanged?.Invoke(false);
+                    return false;
+                }
+                return true;
+            }
+
+            return IsConnected;
+        }
+
+        public bool HasComObject => _comObject != null;
+
+        public int ReadDirectBlockWords(string deviceName, int count, out short[] data)
+        {
+            if (_comObject != null)
+            {
+                short[] outData = new short[count];
+                int res = RunOnSta(() =>
+                {
+                    try
+                    {
+                        return (int)_comObject.ReadDeviceBlock2(deviceName, count, ref outData[0]);
+                    }
+                    catch (Exception ex)
+                    {
+                        LastError = ex.Message;
+                        return -1;
+                    }
+                });
+                data = outData;
+                return res;
+            }
+            else if (MemoryBridge.IsAttached)
+            {
+                return MemoryBridge.ReadDeviceBlockWords(deviceName, count, out data);
+            }
+
+            data = new short[count];
+            return -1;
+        }
+
         public int ReadRawBlockWords(string deviceName, int count, out short[] data)
         {
-            short[] outData = new short[count];
-            int res = RunOnSta(() =>
+            if (MemoryBridge.IsAttached)
             {
-                if (!IsConnected || _comObject == null) return -1;
-                try
-                {
-                    return (int)_comObject.ReadDeviceBlock2(deviceName, count, ref outData[0]);
-                }
-                catch (Exception ex)
-                {
-                    LastError = ex.Message;
-                    return -1;
-                }
-            });
-            data = outData;
-            return res;
+                return MemoryBridge.ReadDeviceBlockWords(deviceName, count, out data);
+            }
+
+            if (MemoryMirror != null && MemoryMirror.IsActive && MemoryMirror.TryReadWords(deviceName, count, out data))
+            {
+                return 0;
+            }
+
+            return ReadDirectBlockWords(deviceName, count, out data);
         }
 
         public int ReadDevice(string deviceName, out int value)
         {
+            if (MemoryBridge.IsAttached)
+            {
+                return MemoryBridge.ReadDevice(deviceName, out value);
+            }
+
             if (MemoryMirror != null && MemoryMirror.IsActive && MemoryMirror.TryReadSingle(deviceName, out value))
             {
                 return 0;
@@ -260,19 +295,31 @@ namespace NetToGXSim3.Core
             int outVal = 0;
             int res = RunOnSta(() =>
             {
-                if (!IsConnected || _comObject == null) return -1;
-                try
+                if (!IsConnected) return -1;
+                if (_comObject != null)
                 {
-                    int v = 0;
-                    int r = (int)_comObject.GetDevice(deviceName, out v);
+                    try
+                    {
+                        int v = 0;
+                        int r = (int)_comObject.GetDevice(deviceName, out v);
+                        if (r == 0) outVal = v;
+                        return r;
+                    }
+                    catch (Exception ex)
+                    {
+                        LastError = ex.Message;
+                        return -1;
+                    }
+                }
+
+                if (MemoryBridge.IsAttached)
+                {
+                    int r = MemoryBridge.ReadDevice(deviceName, out int v);
                     if (r == 0) outVal = v;
                     return r;
                 }
-                catch (Exception ex)
-                {
-                    LastError = ex.Message;
-                    return -1;
-                }
+
+                return -1;
             });
             value = outVal;
             return res;
@@ -280,18 +327,35 @@ namespace NetToGXSim3.Core
 
         public int WriteDevice(string deviceName, int value)
         {
+            if (MemoryBridge.IsAttached)
+            {
+                int r = MemoryBridge.WriteDevice(deviceName, value);
+                MemoryMirror?.NotifyWrite(deviceName, value);
+                return r;
+            }
+
             int res = RunOnSta(() =>
             {
-                if (!IsConnected || _comObject == null) return -1;
-                try
+                if (!IsConnected) return -1;
+                if (_comObject != null)
                 {
-                    return (int)_comObject.SetDevice(deviceName, value);
+                    try
+                    {
+                        return (int)_comObject.SetDevice(deviceName, value);
+                    }
+                    catch (Exception ex)
+                    {
+                        LastError = ex.Message;
+                        return -1;
+                    }
                 }
-                catch (Exception ex)
+
+                if (MemoryBridge.IsAttached)
                 {
-                    LastError = ex.Message;
-                    return -1;
+                    return MemoryBridge.WriteDevice(deviceName, value);
                 }
+
+                return 0;
             });
 
             if (res == 0)
@@ -301,12 +365,13 @@ namespace NetToGXSim3.Core
             return res;
         }
 
-        /// <summary>
-        /// Reads word registers (e.g. D0-D7999) in optimal 256-word chunks for maximum throughput.
-        /// Served instantly from MemoryMirror if the requested range is cached.
-        /// </summary>
         public int ReadDeviceBlockWords(string deviceName, int count, out short[] data)
         {
+            if (MemoryBridge.IsAttached)
+            {
+                return MemoryBridge.ReadDeviceBlockWords(deviceName, count, out data);
+            }
+
             if (MemoryMirror != null && MemoryMirror.IsActive && MemoryMirror.TryReadWords(deviceName, count, out data))
             {
                 return 0;
@@ -349,14 +414,24 @@ namespace NetToGXSim3.Core
             return res;
         }
 
-        /// <summary>
-        /// Writes word registers in optimal 256-word chunks for maximum speed.
-        /// </summary>
         public int WriteDeviceBlockWords(string deviceName, int count, short[] data)
         {
+            if (MemoryBridge.IsAttached)
+            {
+                int r = MemoryBridge.WriteDeviceBlockWords(deviceName, count, data);
+                MemoryMirror?.NotifyWriteWords(deviceName, count, data);
+                return r;
+            }
+
             int res = RunOnSta(() =>
             {
-                if (!IsConnected || _comObject == null) return -1;
+                if (!IsConnected) return -1;
+                if (MemoryBridge.IsAttached)
+                {
+                    return MemoryBridge.WriteDeviceBlockWords(deviceName, count, data);
+                }
+
+                if (_comObject == null) return 0;
                 try
                 {
                     const int maxChunk = 256;
@@ -393,12 +468,13 @@ namespace NetToGXSim3.Core
             return res;
         }
 
-        /// <summary>
-        /// Reads bit devices (e.g. M0-M7999, X0-X377, Y0-Y377) in BATCH using 256-word block reads (4096 bits per COM call).
-        /// Served instantly from MemoryMirror if the requested range is cached.
-        /// </summary>
         public int ReadDeviceBlockBits(string deviceName, int count, out byte[] bitValues)
         {
+            if (MemoryBridge.IsAttached)
+            {
+                return MemoryBridge.ReadDeviceBlockBits(deviceName, count, out bitValues);
+            }
+
             if (MemoryMirror != null && MemoryMirror.IsActive && MemoryMirror.TryReadBits(deviceName, count, out bitValues))
             {
                 return 0;
@@ -474,14 +550,19 @@ namespace NetToGXSim3.Core
             return res;
         }
 
-        /// <summary>
-        /// Writes bit devices in BATCH using word block writes in optimal 256-word chunks.
-        /// </summary>
         public int WriteDeviceBlockBits(string deviceName, int count, byte[] bitValues)
         {
+            if (MemoryBridge.IsAttached)
+            {
+                int r = MemoryBridge.WriteDeviceBlockBits(deviceName, count, bitValues);
+                MemoryMirror?.NotifyWriteBits(deviceName, count, bitValues);
+                return r;
+            }
+
             int res = RunOnSta(() =>
             {
-                if (!IsConnected || _comObject == null) return -1;
+                if (!IsConnected) return -1;
+                if (_comObject == null) return 0;
 
                 int totalWordCount = (count + 15) / 16;
                 const int maxChunkWords = 256;
@@ -552,28 +633,22 @@ namespace NetToGXSim3.Core
             }
 
             string numPartStr = baseDevice.Substring(prefix.Length);
-            bool isOctal = prefix.Equals("X", StringComparison.OrdinalIgnoreCase) || prefix.Equals("Y", StringComparison.OrdinalIgnoreCase);
+            bool isOctal = prefix.Equals("X", StringComparison.OrdinalIgnoreCase) ||
+                           prefix.Equals("Y", StringComparison.OrdinalIgnoreCase);
 
+            int startNumber = 0;
             if (isOctal)
             {
-                try
-                {
-                    int decVal = Convert.ToInt32(numPartStr, 8) + offset;
-                    return prefix + Convert.ToString(decVal, 8);
-                }
-                catch
-                {
-                    return baseDevice;
-                }
+                try { startNumber = Convert.ToInt32(numPartStr, 8); } catch { startNumber = 0; }
+                int nextNumber = startNumber + offset;
+                return prefix + Convert.ToString(nextNumber, 8);
             }
             else
             {
-                if (int.TryParse(numPartStr, out int decVal))
-                {
-                    return prefix + (decVal + offset);
-                }
+                int.TryParse(numPartStr, out startNumber);
+                int nextNumber = startNumber + offset;
+                return prefix + nextNumber.ToString();
             }
-            return baseDevice;
         }
 
         public void Dispose()

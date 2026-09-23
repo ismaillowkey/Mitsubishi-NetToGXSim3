@@ -6,7 +6,7 @@ namespace NetToGXSim3.Core
     /// <summary>
     /// In-Memory Cache Mirror for ultra-fast (sub-millisecond) reads from Mitsubishi GX Simulator 3.
     /// Continuously synchronizes standard PLC device ranges in the background so external clients
-    /// (e.g. Unity, IoTClient, SCADA) get instantaneous responses without COM overhead.
+    /// (e.g. Unity, HMI, SCADA) get instantaneous responses.
     /// </summary>
     public class PlcMemoryMirror : IDisposable
     {
@@ -23,7 +23,7 @@ namespace NetToGXSim3.Core
 
         private readonly object _syncLock = new object();
 
-        public bool IsActive { get; set; } = false;
+        public bool IsActive { get; set; } = true;
         public int PollingIntervalMs { get; set; } = 10;
         public long CyclesCompleted { get; private set; }
 
@@ -66,7 +66,7 @@ namespace NetToGXSim3.Core
                 try
                 {
                     // 1. Refresh Inputs X0-X177 (128 bits = 8 words)
-                    if (_engine.ReadRawBlockWords("X0", 8, out short[] xWords) == 0 && xWords != null)
+                    if (_engine.ReadDirectBlockWords("X0", 8, out short[] xWords) == 0 && xWords != null)
                     {
                         lock (_syncLock)
                         {
@@ -86,7 +86,7 @@ namespace NetToGXSim3.Core
                     }
 
                     // 2. Refresh Outputs Y0-Y177 (128 bits = 8 words)
-                    if (_engine.ReadRawBlockWords("Y0", 8, out short[] yWords) == 0 && yWords != null)
+                    if (_engine.ReadDirectBlockWords("Y0", 8, out short[] yWords) == 0 && yWords != null)
                     {
                         lock (_syncLock)
                         {
@@ -106,7 +106,7 @@ namespace NetToGXSim3.Core
                     }
 
                     // 3. Refresh Relays M0-M1023 (1024 bits = 64 words)
-                    if (_engine.ReadRawBlockWords("M0", 64, out short[] mWords) == 0 && mWords != null)
+                    if (_engine.ReadDirectBlockWords("M0", 64, out short[] mWords) == 0 && mWords != null)
                     {
                         lock (_syncLock)
                         {
@@ -126,7 +126,7 @@ namespace NetToGXSim3.Core
                     }
 
                     // 4. Refresh Registers D0-D511 (2x 256 words)
-                    if (_engine.ReadRawBlockWords("D0", 256, out short[] dWords0) == 0 && dWords0 != null)
+                    if (_engine.ReadDirectBlockWords("D0", 256, out short[] dWords0) == 0 && dWords0 != null)
                     {
                         lock (_syncLock)
                         {
@@ -134,7 +134,7 @@ namespace NetToGXSim3.Core
                         }
                     }
 
-                    if (_engine.ReadRawBlockWords("D256", 256, out short[] dWords1) == 0 && dWords1 != null)
+                    if (_engine.ReadDirectBlockWords("D256", 256, out short[] dWords1) == 0 && dWords1 != null)
                     {
                         lock (_syncLock)
                         {
@@ -153,7 +153,7 @@ namespace NetToGXSim3.Core
         public bool TryReadBits(string deviceName, int count, out byte[] bitValues)
         {
             bitValues = new byte[count];
-            if (!IsActive) return false;
+            if (!IsActive || CyclesCompleted == 0) return false;
 
             ParseDevice(deviceName, out string prefix, out int startAddr, out bool isOctal);
 
@@ -184,7 +184,7 @@ namespace NetToGXSim3.Core
         public bool TryReadWords(string deviceName, int count, out short[] data)
         {
             data = new short[count];
-            if (!IsActive) return false;
+            if (!IsActive || CyclesCompleted == 0) return false;
 
             ParseDevice(deviceName, out string prefix, out int startAddr, out _);
 
@@ -203,7 +203,7 @@ namespace NetToGXSim3.Core
         public bool TryReadSingle(string deviceName, out int value)
         {
             value = 0;
-            if (!IsActive) return false;
+            if (!IsActive || CyclesCompleted == 0) return false;
 
             ParseDevice(deviceName, out string prefix, out int startAddr, out bool isOctal);
 

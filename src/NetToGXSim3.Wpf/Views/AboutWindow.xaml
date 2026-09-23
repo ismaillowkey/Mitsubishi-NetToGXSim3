@@ -1,0 +1,105 @@
+<Window x:Class="NetToGXSim3.Wpf.Views.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="About NetToGXSim3"
+        Icon="pack://application:,,,/Resources/app_icon.ico"
+        Height="490" Width="560"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#F8FAFC" Foreground="#0F172A">
+
+    <Window.Resources>
+        <Style x:Key="ModernButton" TargetType="Button">
+            <Setter Property="Background" Value="#0284C7" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="14,8" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Bottom Action Bar -->
+        <Border DockPanel.Dock="Bottom" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="20,12">
+            <Grid>
+                <TextBlock Text="Open-source under MIT License" FontSize="11" Foreground="#94A3B8" VerticalAlignment="Center"/>
+                <Button Content="Close" Width="90" Style="{StaticResource ModernButton}" HorizontalAlignment="Right" Click="BtnClose_Click"/>
+            </Grid>
+        </Border>
+
+        <!-- Main Content -->
+        <Grid Margin="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- App Header Card -->
+            <Border Grid.Row="0" Background="#FFFFFF" CornerRadius="12" Padding="20" Margin="0,0,0,16" BorderBrush="#E2E8F0" BorderThickness="1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border CornerRadius="12" Width="64" Height="64" Margin="0,0,16,0" ClipToBounds="True" Background="#0F172A">
+                        <Image Source="pack://application:,,,/Resources/app_icon.png" Width="64" Height="64" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Border>
+
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="NetToGXSim3" FontSize="22" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,10,0"/>
+                            <Border Background="#E0F2FE" CornerRadius="6" Padding="8,2" VerticalAlignment="Center">
+                                <TextBlock x:Name="TxtVersionBadge" FontSize="11" FontWeight="Bold" Foreground="#0369A1" />
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Mitsubishi GX Works 3 Simulator Network Protocol Bridge" FontSize="12" Foreground="#64748B" Margin="0,3,0,4"/>
+                        <TextBlock Text="Developed by Ismail Lowkey" FontSize="11.5" FontWeight="SemiBold" Foreground="#475569"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Architecture & Feature Highlights -->
+            <StackPanel Grid.Row="1">
+                <Border Background="#FFFFFF" CornerRadius="10" Padding="16,14" Margin="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="⚡ Direct GXS-IO Memory Engine" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                        <TextBlock Text="Direct real-time memory bridge into GX Simulator 3 runtime (FX5U / iQ-R / L-Series) with sub-microsecond latency. Zero external dependencies (No MX Component or Logical Station required)." FontSize="11" Foreground="#475569" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#FFFFFF" CornerRadius="10" Padding="16,14" Margin="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="🌐 Pure On-Demand MELSEC MC Protocol Server" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                        <TextBlock Text="Provides dual TCP/UDP servers supporting QnA 3E Binary/ASCII and A-1E Binary/ASCII. Connect seamlessly with Weintek HMI, SCADA, Python, Node-RED, and IoT systems." FontSize="11" Foreground="#475569" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#FFFFFF" CornerRadius="10" Padding="16,14" BorderBrush="#E2E8F0" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="🔄 Bidirectional GX Works 3 Force Table Sync" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                        <TextBlock Text="Synchronizes live Base RAM, Simulation Force Latch, and ASIC images. Inputs forced in GX Works 3 can be cleanly toggled from the NetToGXSim3 UI or MC protocol clients." FontSize="11" Foreground="#475569" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Links & Action Buttons -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0">
+                <Button Content="🌐 GitHub Repository" Background="#0F172A" Style="{StaticResource ModernButton}" Margin="0,0,8,0" Click="BtnGithub_Click"/>
+                <Button Content="✨ Release Notes" Background="#F1F5F9" Foreground="#334155" Style="{StaticResource ModernButton}" Margin="0,0,8,0" Click="BtnWhatsNew_Click"/>
+                <Button Content="🔄 Check for Updates" Background="#F1F5F9" Foreground="#0284C7" Style="{StaticResource ModernButton}" Click="BtnCheckUpdates_Click"/>
+            </StackPanel>
+        </Grid>
+    </DockPanel>
+</Window>

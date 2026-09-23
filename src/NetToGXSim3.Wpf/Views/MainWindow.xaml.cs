@@ -21,15 +21,21 @@ namespace NetToGXSim3.Wpf.Views
         private readonly McProtocolServer _mcServer2;
         private readonly DispatcherTimer _pollTimer;
 
-        // UI components for Inputs X0 to X7 (8 octal inputs)
-        private readonly ToggleButton[] _inputToggles = new ToggleButton[8];
-        private readonly Ellipse[] _inputLeds = new Ellipse[8];
+        private static readonly string[] OctalDeviceIndices = new string[]
+        {
+            "0", "1", "2", "3", "4", "5", "6", "7",
+            "10", "11", "12", "13", "14", "15", "16", "17"
+        };
+
+        // UI components for Inputs X0 to X17 (16 octal inputs)
+        private readonly ToggleButton[] _inputToggles = new ToggleButton[16];
+        private readonly Ellipse[] _inputLeds = new Ellipse[16];
         private bool _isUpdatingInputsFromPlc = false;
 
-        // UI components for Outputs Y0 to Y7 (8 octal outputs)
-        private readonly Ellipse[] _outputLamps = new Ellipse[8];
-        private readonly DropShadowEffect[] _outputGlows = new DropShadowEffect[8];
-        private readonly TextBlock[] _outputStateTexts = new TextBlock[8];
+        // UI components for Outputs Y0 to Y17 (16 octal outputs)
+        private readonly Ellipse[] _outputLamps = new Ellipse[16];
+        private readonly DropShadowEffect[] _outputGlows = new DropShadowEffect[16];
+        private readonly TextBlock[] _outputStateTexts = new TextBlock[16];
 
         private bool _isPollingBusy = false;
         private DateTime _lastConnectAttempt = DateTime.MinValue;
@@ -37,6 +43,10 @@ namespace NetToGXSim3.Wpf.Views
         public MainWindow()
         {
             InitializeComponent();
+
+            Title = $"NetToGXSim3 {AppVersion.DisplayVersion} - Mitsubishi GX Works 3 Simulator Network Bridge by Ismail Lowkey";
+            TxtHeaderVersion.Text = AppVersion.DisplayVersion;
+            TxtFooterVersion.Text = $"NetToGXSim3 {AppVersion.DisplayVersion}";
 
             _simEngine = new GxSimulatorEngine(1);
             _simEngine.LogMessage += (msg) => Dispatcher.InvokeAsync(() => Log(msg));
@@ -55,6 +65,15 @@ namespace NetToGXSim3.Wpf.Views
             int s2Port = McProtocolServer.GetNextAvailablePort(6000, ServerTransportMode.UdpOnly);
             _mcServer2 = new McProtocolServer(_simEngine, "MC UDP Server", s2Port, ServerTransportMode.UdpOnly);
             _mcServer2.LogMessage += (msg) => Dispatcher.InvokeAsync(() => Log(msg));
+            _simEngine.ConnectionStateChanged += isConnected =>
+            {
+                Dispatcher.InvokeAsync(() =>
+                {
+                    UpdateSimStatusDisplay(isConnected);
+                    if (!isConnected) ResetUiInputsAndOutputs();
+                });
+            };
+
             UpdateServer2Ui();
 
             Task.Run(() =>
@@ -144,10 +163,11 @@ namespace NetToGXSim3.Wpf.Views
         {
             InputGrid.Children.Clear();
 
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < 16; i++)
             {
                 int bitIndex = i;
-                string devName = $"X{i}";
+                string octalNum = OctalDeviceIndices[i];
+                string devName = $"X{octalNum}";
 
                 var card = new Border
                 {
@@ -217,10 +237,10 @@ namespace NetToGXSim3.Wpf.Views
                     Task.Run(() =>
                     {
                         _simEngine.WriteDevice(devName, val);
-                        // Instant readback of Outputs Y0-Y7 after PLC ladder scan
+                        // Instant readback of Outputs after PLC ladder scan
                         System.Threading.Thread.Sleep(40);
                         byte[] yBits;
-                        if (_simEngine.ReadDeviceBlockBits("Y0", 8, out yBits) == 0)
+                        if (_simEngine.ReadDeviceBlockBits("Y0", 16, out yBits) == 0)
                         {
                             Dispatcher.InvokeAsync(() => UpdateOutputsUi(yBits));
                         }
@@ -242,7 +262,7 @@ namespace NetToGXSim3.Wpf.Views
         private void UpdateOutputsUi(byte[] yBits)
         {
             if (yBits == null) return;
-            for (int i = 0; i < Math.Min(8, yBits.Length); i++)
+            for (int i = 0; i < Math.Min(16, yBits.Length); i++)
             {
                 bool isOn = yBits[i] != 0;
                 _outputLamps[i].Fill = new SolidColorBrush(isOn ? Color.FromRgb(34, 197, 94) : Color.FromRgb(203, 213, 225));
@@ -257,10 +277,11 @@ namespace NetToGXSim3.Wpf.Views
         {
             OutputGrid.Children.Clear();
 
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < 16; i++)
             {
                 int bitIndex = i;
-                string devName = $"Y{i}";
+                string octalNum = OctalDeviceIndices[i];
+                string devName = $"Y{octalNum}";
 
                 var card = new Border
                 {
@@ -336,9 +357,23 @@ namespace NetToGXSim3.Wpf.Views
             {
                 try
                 {
-                    if (!_simEngine.IsConnected)
+                    if (_simEngine.IsConnected)
                     {
-                        if ((DateTime.UtcNow - _lastConnectAttempt).TotalSeconds < 3) return;
+                        // Proactive heartbeat: auto-detect if GX Simulator process closed or stopped (OFF)
+                        if (!_simEngine.CheckConnectionAlive())
+                        {
+                            Dispatcher.InvokeAsync(() =>
+                            {
+                                UpdateSimStatusDisplay(false);
+                                ResetUiInputsAndOutputs();
+                            });
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        // Proactive auto-detection when GX Simulator starts (ON)
+                        if ((DateTime.UtcNow - _lastConnectAttempt).TotalSeconds < 1.5) return;
                         _lastConnectAttempt = DateTime.UtcNow;
 
                         bool reconnected = _simEngine.Connect(1);
@@ -346,16 +381,16 @@ namespace NetToGXSim3.Wpf.Views
                         if (!reconnected) return;
                     }
 
-                    // Batch read Inputs X0 to X7
+                    // Batch read Inputs X0 to X17 (16 octal inputs)
                     byte[] xBits;
-                    if (_simEngine.ReadDeviceBlockBits("X0", 8, out xBits) == 0)
+                    if (_simEngine.ReadDeviceBlockBits("X0", 16, out xBits) == 0)
                     {
                         Dispatcher.InvokeAsync(() =>
                         {
                             _isUpdatingInputsFromPlc = true;
                             try
                             {
-                                for (int i = 0; i < 8; i++)
+                                for (int i = 0; i < Math.Min(16, xBits.Length); i++)
                                 {
                                     bool isOn = xBits[i] != 0;
                                     if (_inputToggles[i].IsChecked != isOn)
@@ -374,9 +409,9 @@ namespace NetToGXSim3.Wpf.Views
                         });
                     }
 
-                    // Batch read Outputs Y0 to Y7
+                    // Batch read Outputs Y0 to Y17 (16 octal outputs)
                     byte[] yBits;
-                    if (_simEngine.ReadDeviceBlockBits("Y0", 8, out yBits) == 0)
+                    if (_simEngine.ReadDeviceBlockBits("Y0", 16, out yBits) == 0)
                     {
                         Dispatcher.InvokeAsync(() => UpdateOutputsUi(yBits));
                     }
@@ -393,7 +428,46 @@ namespace NetToGXSim3.Wpf.Views
         {
             SimStatusLed.Fill = new SolidColorBrush(isConnected ? Color.FromRgb(34, 197, 94) : Color.FromRgb(239, 68, 68));
             TxtSimStatus.Text = isConnected ? "GX Sim 3: Connected" : "GX Sim 3: Offline";
+            TxtSimStatus.ToolTip = isConnected
+                ? $"Status: Connected\nEngine: {_simEngine.ConnectedEngineName}\nProtocol: Real-time Memory Bridge"
+                : "Status: Offline\nWaiting for GX Works 3 simulation (Debug -> Start Simulation)...";
             TxtSimStatus.Foreground = new SolidColorBrush(isConnected ? Color.FromRgb(22, 163, 74) : Color.FromRgb(220, 38, 38));
+        }
+
+        private void ResetUiInputsAndOutputs()
+        {
+            _isUpdatingInputsFromPlc = true;
+            try
+            {
+                for (int i = 0; i < 16; i++)
+                {
+                    if (_inputToggles[i] != null)
+                    {
+                        _inputToggles[i].IsChecked = false;
+                        _inputToggles[i].Content = "OFF";
+                    }
+                    if (_inputLeds[i] != null)
+                    {
+                        _inputLeds[i].Fill = new SolidColorBrush(Color.FromRgb(203, 213, 225));
+                        if (_inputLeds[i].Effect is DropShadowEffect effect) effect.Opacity = 0;
+                    }
+                    if (_outputLamps[i] != null)
+                    {
+                        _outputLamps[i].Fill = new SolidColorBrush(Color.FromRgb(203, 213, 225));
+                        _outputLamps[i].Stroke = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+                    }
+                    if (_outputGlows[i] != null) _outputGlows[i].Opacity = 0;
+                    if (_outputStateTexts[i] != null)
+                    {
+                        _outputStateTexts[i].Text = "OFF";
+                        _outputStateTexts[i].Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+                    }
+                }
+            }
+            finally
+            {
+                _isUpdatingInputsFromPlc = false;
+            }
         }
 
         private void BtnReadCustom_Click(object sender, RoutedEventArgs e)
@@ -463,15 +537,40 @@ namespace NetToGXSim3.Wpf.Views
             }
         }
 
+        private const int MaxLogLines = 500;
+        private int _logLineCount = 0;
+
         private void BtnClearLog_Click(object sender, RoutedEventArgs e)
         {
             TxtLog.Clear();
+            _logLineCount = 0;
         }
 
         private void Log(string message)
         {
             string time = DateTime.Now.ToString("HH:mm:ss.fff");
-            TxtLog.AppendText($"[{time}] {message}\n");
+            string entry = $"[{time}] {message}\n";
+
+            if (_logLineCount >= MaxLogLines)
+            {
+                string text = TxtLog.Text;
+                int newlineIndex = text.IndexOf('\n');
+                if (newlineIndex >= 0)
+                {
+                    TxtLog.Text = text.Substring(newlineIndex + 1);
+                }
+                else
+                {
+                    TxtLog.Clear();
+                    _logLineCount = 0;
+                }
+            }
+            else
+            {
+                _logLineCount++;
+            }
+
+            TxtLog.AppendText(entry);
             TxtLog.ScrollToEnd();
         }
 
@@ -760,7 +859,11 @@ namespace NetToGXSim3.Wpf.Views
 
         private void MenuAbout_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show($"NetToGXSim3 v{UpdateCheckerService.CurrentVersion}\nMitsubishi GX Works 3 Simulator Network Bridge\n\nDeveloped by Ismail Lowkey", "About NetToGXSim3", MessageBoxButton.OK, MessageBoxImage.Information);
+            var about = new AboutWindow
+            {
+                Owner = this
+            };
+            about.ShowDialog();
         }
 
         protected override void OnClosed(EventArgs e)
