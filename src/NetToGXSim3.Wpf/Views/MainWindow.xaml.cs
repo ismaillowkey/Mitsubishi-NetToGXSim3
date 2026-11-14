@@ -19,6 +19,7 @@ namespace NetToGXSim3.Wpf.Views
         private readonly GxSimulatorEngine _simEngine;
         private readonly McProtocolServer _mcServer1;
         private readonly McProtocolServer _mcServer2;
+        private readonly OpcDaServerEngine _opcDaServer;
         private readonly DispatcherTimer _pollTimer;
 
         private static readonly string[] OctalDeviceIndices = new string[]
@@ -54,16 +55,16 @@ namespace NetToGXSim3.Wpf.Views
             InitializeInputRack();
             InitializeOutputRack();
 
-            // Server 1 (Top): Port 5000 (Started by default, auto-increment if in use) -> MC TCP Binary Server
-            int s1Port = McProtocolServer.GetNextAvailablePort(5000, ServerTransportMode.TcpOnly);
-            _mcServer1 = new McProtocolServer(_simEngine, "MC TCP Server", s1Port, ServerTransportMode.TcpOnly);
+            // Server 1 (Top): Port 5001 (Started by default, auto-increment if in use) -> MC TCP Binary Server
+            int s1Port = McProtocolServer.GetNextAvailablePort(5001, ServerTransportMode.TcpOnly);
+            _mcServer1 = new McProtocolServer(_simEngine, "MC TCP Server", s1Port, ServerTransportMode.TcpOnly, McCpuMode.FX5);
             _mcServer1.LogMessage += (msg) => Dispatcher.InvokeAsync(() => Log(msg));
             _mcServer1.Start(s1Port);
             UpdateServer1Ui();
 
-            // Server 2 (Bottom): Port 6000 (Stopped by default, check available port) -> MC UDP Binary Server
-            int s2Port = McProtocolServer.GetNextAvailablePort(6000, ServerTransportMode.UdpOnly);
-            _mcServer2 = new McProtocolServer(_simEngine, "MC UDP Server", s2Port, ServerTransportMode.UdpOnly);
+            // Server 2 (Bottom): Port 5002 (Stopped by default, check available port) -> MC UDP Binary Server
+            int s2Port = McProtocolServer.GetNextAvailablePort(5002, ServerTransportMode.UdpOnly);
+            _mcServer2 = new McProtocolServer(_simEngine, "MC UDP Server", s2Port, ServerTransportMode.UdpOnly, McCpuMode.FX5);
             _mcServer2.LogMessage += (msg) => Dispatcher.InvokeAsync(() => Log(msg));
             _simEngine.ConnectionStateChanged += isConnected =>
             {
@@ -75,6 +76,27 @@ namespace NetToGXSim3.Wpf.Views
             };
 
             UpdateServer2Ui();
+
+            // Initialize OPC DA Classic Server (Auto-start on app launch & auto-save enabled)
+            _opcDaServer = new OpcDaServerEngine(_simEngine);
+            _opcDaServer.OnLog += (msg) => Dispatcher.InvokeAsync(() => Log(msg));
+            _opcDaServer.OnStateChanged += () => Dispatcher.InvokeAsync(UpdateOpcServerUI);
+            DgOpcTags.ItemsSource = _opcDaServer.Tags;
+            TxtTagStoragePath.Text = $"Storage: {System.IO.Path.GetFileName(_opcDaServer.StoragePath)}";
+            TxtTagStoragePath.ToolTip = _opcDaServer.StoragePath;
+            _opcDaServer.StartServer();
+            UpdateOpcServerUI();
+
+            // Auto-register OPC DA Server in Windows Registry on app startup so SCADA / OPC clients immediately detect it
+            try
+            {
+                string currentExe = OpcRegistryHelper.ResolveCurrentExe(System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName ?? "");
+                if (!string.IsNullOrEmpty(currentExe))
+                {
+                    OpcRegistryHelper.RegisterServer(currentExe, out _);
+                }
+            }
+            catch { }
 
             Task.Run(() =>
             {
@@ -94,10 +116,10 @@ namespace NetToGXSim3.Wpf.Views
                 }
             });
 
-            // Smooth polling timer (100ms) with gentle background execution
+            // High-speed polling timer (30ms for 33 FPS real-time responsiveness)
             _pollTimer = new DispatcherTimer
             {
-                Interval = TimeSpan.FromMilliseconds(100)
+                Interval = TimeSpan.FromMilliseconds(30)
             };
             _pollTimer.Tick += PollTimer_Tick;
             _pollTimer.Start();
@@ -582,7 +604,7 @@ namespace NetToGXSim3.Wpf.Views
             }
             else
             {
-                int port = 5000;
+                int port = 5001;
                 if (int.TryParse(TxtPortServer1.Text.Trim(), out int p)) port = p;
 
                 int availablePort = McProtocolServer.GetNextAvailablePort(port, ServerTransportMode.TcpOnly);
@@ -590,6 +612,8 @@ namespace NetToGXSim3.Wpf.Views
                 {
                     Log($"[MC TCP Server] Port {port} is occupied! Automatically switched to port {availablePort}.");
                 }
+                _mcServer1.CpuMode = McCpuMode.FX5;
+                Log($"[MC TCP Server] CPU mode: FX5U (MC protocol: {_mcServer1.CpuModel}).");
                 _mcServer1.Start(availablePort);
             }
             UpdateServer1Ui();
@@ -603,7 +627,7 @@ namespace NetToGXSim3.Wpf.Views
             }
             else
             {
-                int port = 6000;
+                int port = 5002;
                 if (int.TryParse(TxtPortServer2.Text.Trim(), out int p)) port = p;
 
                 int availablePort = McProtocolServer.GetNextAvailablePort(port, ServerTransportMode.UdpOnly);
@@ -611,6 +635,8 @@ namespace NetToGXSim3.Wpf.Views
                 {
                     Log($"[MC UDP Server] Port {port} is occupied! Automatically switched to port {availablePort}.");
                 }
+                _mcServer2.CpuMode = McCpuMode.FX5;
+                Log($"[MC UDP Server] CPU mode: FX5U (MC protocol: {_mcServer2.CpuModel}).");
                 _mcServer2.Start(availablePort);
             }
             UpdateServer2Ui();
@@ -716,9 +742,65 @@ namespace NetToGXSim3.Wpf.Views
                 "NetToGXSim3 Guide:\n\n" +
                 "1. Inputs X0-X7 can be toggled using switches in Tab 1.\n" +
                 "2. Outputs Y0-Y7 display real-time PLC output states.\n" +
-                "3. MC Protocol Servers: Server 1 (port 5000) and Server 2 (port 6000).\n" +
-                "4. Ports auto-increment if conflict detected (e.g. 5000 -> 5001).\n",
+                "3. MC Protocol Servers: Server 1 (port 5001) and Server 2 (port 5002).\n" +
+                "4. Ports auto-increment if conflict detected (e.g. 5001 -> 5003).\n",
                 "User Guide", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void BtnExampleHmi_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                string targetDir = System.IO.Path.Combine(baseDir, "Example Program HMI");
+
+                // Jika belum ditemukan di base directory, cari ke atas (misal saat running via bin/Release)
+                if (!System.IO.Directory.Exists(targetDir))
+                {
+                    string current = baseDir;
+                    for (int i = 0; i < 5; i++)
+                    {
+                        string parent = System.IO.Path.GetFullPath(System.IO.Path.Combine(current, ".."));
+                        if (parent == current)
+                        {
+                            break;
+                        }
+                        current = parent;
+
+                        string candidate = System.IO.Path.Combine(current, "Example Program HMI");
+                        if (System.IO.Directory.Exists(candidate))
+                        {
+                            targetDir = candidate;
+                            break;
+                        }
+                    }
+                }
+
+                if (System.IO.Directory.Exists(targetDir))
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = targetDir,
+                        UseShellExecute = true
+                    });
+                }
+                else
+                {
+                    MessageBox.Show(
+                        $"Example Program HMI folder was not found at:\n{targetDir}",
+                        "Folder Not Found",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Failed to open Example Program HMI folder:\n{ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
 
         private async void MenuCheckUpdate_Click(object sender, RoutedEventArgs e)
@@ -866,11 +948,339 @@ namespace NetToGXSim3.Wpf.Views
             about.ShowDialog();
         }
 
+        #region OPC DA Classic Server Handlers
+
+        private void UpdateOpcServerUI()
+        {
+            if (_opcDaServer == null) return;
+
+            if (_opcDaServer.IsRunning)
+            {
+                TxtOpcServerStatus.Text = "OPC DA SERVER: RUNNING (AUTO-STARTED)";
+                TxtOpcServerStatus.Foreground = new SolidColorBrush(Color.FromRgb(4, 120, 87));
+                OpcStatusLed.Fill = new SolidColorBrush(Color.FromRgb(16, 185, 129));
+                BtnStartOpcServer.Visibility = Visibility.Collapsed;
+                BtnStopOpcServer.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                TxtOpcServerStatus.Text = "OPC DA SERVER: STOPPED";
+                TxtOpcServerStatus.Foreground = new SolidColorBrush(Color.FromRgb(220, 38, 38));
+                OpcStatusLed.Fill = new SolidColorBrush(Color.FromRgb(239, 68, 68));
+                BtnStartOpcServer.Visibility = Visibility.Visible;
+                BtnStopOpcServer.Visibility = Visibility.Collapsed;
+            }
+
+            TxtOpcClientsCount.Text = _opcDaServer.ClientCount.ToString();
+            TxtOpcTotalTags.Text = _opcDaServer.Tags.Count.ToString();
+        }
+
+        private void BtnStartOpcServer_Click(object sender, RoutedEventArgs e)
+        {
+            _opcDaServer.StartServer();
+            UpdateOpcServerUI();
+        }
+
+        private void BtnStopOpcServer_Click(object sender, RoutedEventArgs e)
+        {
+            _opcDaServer.StopServer();
+            UpdateOpcServerUI();
+        }
+
+        private void BtnRegisterOpcServer_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string currentExe = OpcRegistryHelper.ResolveCurrentExe(System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName ?? "");
+                if (string.IsNullOrEmpty(currentExe) || !System.IO.File.Exists(currentExe))
+                {
+                    MessageBox.Show("Could not find application executable path for registration.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // Check if running as Administrator
+                bool isAdmin = false;
+                try
+                {
+                    using (var identity = System.Security.Principal.WindowsIdentity.GetCurrent())
+                    {
+                        var principal = new System.Security.Principal.WindowsPrincipal(identity);
+                        isAdmin = principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+                    }
+                }
+                catch { }
+
+                if (!isAdmin)
+                {
+                    // Trigger UAC prompt to elevate registration
+                    try
+                    {
+                        var psi = new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = currentExe,
+                            Arguments = "/regserver",
+                            Verb = "runas",
+                            UseShellExecute = true
+                        };
+                        var proc = System.Diagnostics.Process.Start(psi);
+                        proc?.WaitForExit();
+
+                        if (OpcRegistryHelper.IsRegisteredInHklm())
+                        {
+                            MessageBox.Show("NetToGXSim3 OPC DA Server has been registered successfully with Administrator privileges in Windows System Registry (HKLM)!\n\nProgID: NetToGXSim3.OPCServer.DA\n\nOPC clients (OPC Expert, Kepware, Matrikon) will now detect the server.",
+                                            "OPC Registration Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+                            return;
+                        }
+                    }
+                    catch (System.ComponentModel.Win32Exception)
+                    {
+                        MessageBox.Show("Administrator privileges are required to register OPC DA Server system-wide for OPC clients (OpcEnum).\n\nPlease approve the Windows UAC prompt or run NetToGXSim3 as Administrator.",
+                                        "UAC Permission Required", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+                }
+
+                if (OpcRegistryHelper.RegisterServer(currentExe, out string error))
+                {
+                    MessageBox.Show("NetToGXSim3 OPC DA Server has been registered successfully in Windows COM Registry!\n\nProgID: NetToGXSim3.OPCServer.DA",
+                                    "OPC Registration Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show($"Failed to register server: {error}\n\nTip: Run NetToGXSim3 as Administrator to write to Windows HKLM.",
+                                    "OPC Registration Failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error registering OPC Server: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void BtnAddOpcTag_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new TagEditWindow();
+            dlg.Owner = this;
+            if (dlg.ShowDialog() == true)
+            {
+                _opcDaServer.AddTag(dlg.TagItem);
+                UpdateOpcServerUI();
+                Log($"Tag added: {dlg.TagItem.TagName} -> {dlg.TagItem.Address} ({dlg.TagItem.DataType})");
+            }
+        }
+
+        private void BtnRowEditTag_Click(object sender, RoutedEventArgs e)
+        {
+            var btn = sender as Button;
+            OpcTagItem? tag = null;
+            if (btn != null && btn.Tag is OpcTagItem tagFromBtn)
+            {
+                tag = tagFromBtn;
+            }
+            else if (DgOpcTags.SelectedItem is OpcTagItem tagFromGrid)
+            {
+                tag = tagFromGrid;
+            }
+
+            if (tag == null) return;
+
+            var dlg = new TagEditWindow(tag);
+            dlg.Owner = this;
+            if (dlg.ShowDialog() == true)
+            {
+                tag.TagName = dlg.TagItem.TagName;
+                tag.Address = dlg.TagItem.Address;
+                tag.DataType = dlg.TagItem.DataType;
+                tag.Description = dlg.TagItem.Description;
+                tag.IsActive = dlg.TagItem.IsActive;
+
+                _opcDaServer.SaveTags();
+                UpdateOpcServerUI();
+                Log($"Tag updated: {tag.TagName} -> {tag.Address}");
+            }
+        }
+
+        private void BtnRowDeleteTag_Click(object sender, RoutedEventArgs e)
+        {
+            var btn = sender as Button;
+            OpcTagItem? tag = null;
+            if (btn != null && btn.Tag is OpcTagItem tagFromBtn)
+            {
+                tag = tagFromBtn;
+            }
+            else if (DgOpcTags.SelectedItem is OpcTagItem tagFromGrid)
+            {
+                tag = tagFromGrid;
+            }
+
+            if (tag == null) return;
+
+            var r = MessageBox.Show($"Are you sure you want to delete tag '{tag.TagName}' ({tag.Address})?", "Confirm Delete Tag", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (r == MessageBoxResult.Yes)
+            {
+                _opcDaServer.RemoveTag(tag);
+                UpdateOpcServerUI();
+                Log($"Tag deleted: {tag.TagName}");
+            }
+        }
+
+        private void BtnResetOpcPresets_Click(object sender, RoutedEventArgs e)
+        {
+            var r = MessageBox.Show("Reset the tag list to default Mitsubishi FX5U / iQ-R presets (X0..X17, Y0..Y17, M0..M7, D0..D3, R0, W0)?\nCurrent changes will be overwritten.", "Reset Presets", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (r == MessageBoxResult.Yes)
+            {
+                _opcDaServer.LoadDefaultPresets();
+                UpdateOpcServerUI();
+                Log("Tags reset to default Mitsubishi FX5U / iQ-R presets.");
+            }
+        }
+
+        private void BtnExportOpcCsv_Click(object sender, RoutedEventArgs e)
+        {
+            var sfd = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "CSV File (*.csv)|*.csv",
+                FileName = "NetToGXSim3_OpcTags.csv"
+            };
+
+            if (sfd.ShowDialog() == true)
+            {
+                try
+                {
+                    string csv = _opcDaServer.ExportCsv();
+                    System.IO.File.WriteAllText(sfd.FileName, csv);
+                    MessageBox.Show("Tags exported to CSV successfully!", "Export Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Export failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void BtnImportOpcCsv_Click(object sender, RoutedEventArgs e)
+        {
+            var ofd = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "CSV File (*.csv)|*.csv"
+            };
+
+            if (ofd.ShowDialog() == true)
+            {
+                try
+                {
+                    string csv = System.IO.File.ReadAllText(ofd.FileName);
+                    _opcDaServer.ImportCsv(csv);
+                    UpdateOpcServerUI();
+                    MessageBox.Show("Tags imported from CSV successfully!", "Import Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Import failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void DgOpcTags_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var selected = DgOpcTags.SelectedItem as OpcTagItem;
+            if (selected != null)
+            {
+                TxtOpcSelectedTag.Text = $"{selected.TagName} ({selected.Address}, {selected.DataType})";
+                if (selected.Value != null)
+                {
+                    TxtOpcWriteValue.Text = selected.Value.ToString();
+                }
+                else
+                {
+                    TxtOpcWriteValue.Text = "0";
+                }
+            }
+            else
+            {
+                TxtOpcSelectedTag.Text = "None (select a row)";
+            }
+        }
+
+        private void DgOpcTags_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            BtnRowEditTag_Click(sender, e);
+        }
+
+        private void BtnOpcWrite_Click(object sender, RoutedEventArgs e)
+        {
+            var selected = DgOpcTags.SelectedItem as OpcTagItem;
+            if (selected == null)
+            {
+                MessageBox.Show("Please select a tag from the table first!", "Warning", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            string valStr = "";
+            if (TxtOpcWriteValue.Text != null)
+            {
+                valStr = TxtOpcWriteValue.Text.Trim();
+            }
+
+            if (string.IsNullOrEmpty(valStr)) return;
+
+            bool ok = _opcDaServer.WriteTagToPlc(selected, valStr);
+            if (ok)
+            {
+                Log($"[OPC Test Write] Wrote '{valStr}' to tag '{selected.TagName}' ({selected.Address})");
+            }
+            else
+            {
+                MessageBox.Show("Failed to write to GX Simulator 3!\nMake sure GX Simulator 3 is running and connected.", "Write Failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private void BtnOpcToggle_Click(object sender, RoutedEventArgs e)
+        {
+            var selected = DgOpcTags.SelectedItem as OpcTagItem;
+            if (selected == null)
+            {
+                MessageBox.Show("Please select a tag from the table first!", "Warning", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (selected.DataType != OpcDataType.Bool)
+            {
+                MessageBox.Show("Toggle only works for Bool tags!", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            bool current = false;
+            if (selected.Value is bool b)
+            {
+                current = b;
+            }
+            else if (selected.Value != null && bool.TryParse(selected.Value.ToString(), out bool pb))
+            {
+                current = pb;
+            }
+
+            bool next = !current;
+            bool ok = _opcDaServer.WriteTagToPlc(selected, next);
+            if (ok)
+            {
+                TxtOpcWriteValue.Text = next.ToString();
+                Log($"[OPC Test Toggle] Toggled '{selected.TagName}' ({selected.Address}) to {next}");
+            }
+            else
+            {
+                MessageBox.Show("Failed to toggle tag on GX Simulator 3!\nMake sure GX Simulator 3 is running and connected.", "Toggle Failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        #endregion
+
         protected override void OnClosed(EventArgs e)
         {
             _pollTimer.Stop();
             _mcServer1?.Stop();
             _mcServer2?.Stop();
+            _opcDaServer?.Dispose();
             _simEngine?.Dispose();
             base.OnClosed(e);
         }

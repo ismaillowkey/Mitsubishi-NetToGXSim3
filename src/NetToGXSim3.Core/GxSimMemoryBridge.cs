@@ -12,13 +12,16 @@ namespace NetToGXSim3.Core
     /// </summary>
     public class GxSimMemoryBridge : IDisposable
     {
-        // Device memory offsets within GXS3.SYS01.CPU01.RX600.RAM
+        // Device memory offsets within GXS3.SYS01.CPU01.RX600.RAM (Empirically verified from FX5U runtime)
         private const long OFFSET_D = 0x061A50;      // Data Registers D (Word) - D0 to D7999 (16,000 bytes = 8,000 words)
+        private const long OFFSET_R = 0x00BE80;      // File Registers R / ZR (Word) - R0 to R32767 (65,534 bytes = 32,767 words)
+        private const long OFFSET_W = 0x061450;      // Link Registers W (Word) - W0 to W511 (1,024 bytes = 512 words)
         private const long OFFSET_X_RAM = 0x066000;  // Input Relays X (Octal Bit) Base Table
         private const long OFFSET_X_FORCE = 0x066184;// Input Relays X Simulation/Force Latch Table
         private const long OFFSET_Y_RAM = 0x066204;  // Output Relays Y (Octal Bit) Base Table
         private const long OFFSET_Y_FORCE = 0x066388;// Output Relays Y Simulation/Force Latch Table
-        private const long OFFSET_M = 0x066408;      // Internal Relays M (Decimal Bit) - M0 to M4095 (512 bytes)
+        private const long OFFSET_M = 0x060000;      // Internal Relays M (Decimal Bit) - M0 to M7679 (960 bytes = 7,680 bits)
+        private const long OFFSET_L = 0x0603C0;      // Latch Relays L (Decimal Bit) - L0 to L7679 (960 bytes = 7,680 bits)
 
         // ASIC I/O physical simulation registers
         private const long OFFSET_X_ASIC = 0x001510; // Physical Input Image X
@@ -239,8 +242,15 @@ namespace NetToGXSim3.Core
                             value = (b >> bitPos) & 0x01;
                             return 0;
                         }
-                    case "M":
                     case "L":
+                        {
+                            int bytePos = (wordOffset * 16 + bitOffset) / 8;
+                            int bitPos = (wordOffset * 16 + bitOffset) % 8;
+                            byte b = _ram.ReadByte(OFFSET_L + bytePos);
+                            value = (b >> bitPos) & 0x01;
+                            return 0;
+                        }
+                    case "M":
                     case "F":
                         {
                             int bytePos = (wordOffset * 16 + bitOffset) / 8;
@@ -249,8 +259,18 @@ namespace NetToGXSim3.Core
                             value = (b >> bitPos) & 0x01;
                             return 0;
                         }
-                    case "D":
                     case "W":
+                        {
+                            value = _ram.ReadInt16(OFFSET_W + wordOffset * 2);
+                            return 0;
+                        }
+                    case "R":
+                    case "ZR":
+                        {
+                            value = _ram.ReadInt16(OFFSET_R + wordOffset * 2);
+                            return 0;
+                        }
+                    case "D":
                     default:
                         {
                             value = _ram.ReadInt16(OFFSET_D + wordOffset * 2);
@@ -281,22 +301,40 @@ namespace NetToGXSim3.Core
 
                             // 1. Update Base RAM Input Table
                             byte curRam = _ram.ReadByte(OFFSET_X_RAM + bytePos);
-                            if (value != 0) curRam |= (byte)(1 << bitPos);
-                            else curRam &= (byte)~(1 << bitPos);
+                            if (value != 0)
+                            {
+                                curRam |= (byte)(1 << bitPos);
+                            }
+                            else
+                            {
+                                curRam &= (byte)~(1 << bitPos);
+                            }
                             _ram.Write(OFFSET_X_RAM + bytePos, curRam);
 
                             // 2. Update Force / Simulation Input Latch Table (Overcomes GX Works 3 Force ON locks)
                             byte curForce = _ram.ReadByte(OFFSET_X_FORCE + bytePos);
-                            if (value != 0) curForce |= (byte)(1 << bitPos);
-                            else curForce &= (byte)~(1 << bitPos);
+                            if (value != 0)
+                            {
+                                curForce |= (byte)(1 << bitPos);
+                            }
+                            else
+                            {
+                                curForce &= (byte)~(1 << bitPos);
+                            }
                             _ram.Write(OFFSET_X_FORCE + bytePos, curForce);
 
                             // 3. Update ASIC Physical Input Image
                             if (_asic != null)
                             {
                                 byte curAsic = _asic.ReadByte(OFFSET_X_ASIC + bytePos);
-                                if (value != 0) curAsic |= (byte)(1 << bitPos);
-                                else curAsic &= (byte)~(1 << bitPos);
+                                if (value != 0)
+                                {
+                                    curAsic |= (byte)(1 << bitPos);
+                                }
+                                else
+                                {
+                                    curAsic &= (byte)~(1 << bitPos);
+                                }
                                 _asic.Write(OFFSET_X_ASIC + bytePos, curAsic);
                             }
                             return 0;
@@ -308,31 +346,74 @@ namespace NetToGXSim3.Core
 
                             // Update Base RAM
                             byte curRam = _ram.ReadByte(OFFSET_Y_RAM + bytePos);
-                            if (value != 0) curRam |= (byte)(1 << bitPos);
-                            else curRam &= (byte)~(1 << bitPos);
+                            if (value != 0)
+                            {
+                                curRam |= (byte)(1 << bitPos);
+                            }
+                            else
+                            {
+                                curRam &= (byte)~(1 << bitPos);
+                            }
                             _ram.Write(OFFSET_Y_RAM + bytePos, curRam);
 
                             // Update Force Latch Table
                             byte curForce = _ram.ReadByte(OFFSET_Y_FORCE + bytePos);
-                            if (value != 0) curForce |= (byte)(1 << bitPos);
-                            else curForce &= (byte)~(1 << bitPos);
+                            if (value != 0)
+                            {
+                                curForce |= (byte)(1 << bitPos);
+                            }
+                            else
+                            {
+                                curForce &= (byte)~(1 << bitPos);
+                            }
                             _ram.Write(OFFSET_Y_FORCE + bytePos, curForce);
                             return 0;
                         }
-                    case "M":
                     case "L":
+                        {
+                            int bytePos = (wordOffset * 16 + bitOffset) / 8;
+                            int bitPos = (wordOffset * 16 + bitOffset) % 8;
+                            byte cur = _ram.ReadByte(OFFSET_L + bytePos);
+                            if (value != 0)
+                            {
+                                cur |= (byte)(1 << bitPos);
+                            }
+                            else
+                            {
+                                cur &= (byte)~(1 << bitPos);
+                            }
+                            _ram.Write(OFFSET_L + bytePos, cur);
+                            return 0;
+                        }
+                    case "M":
                     case "F":
                         {
                             int bytePos = (wordOffset * 16 + bitOffset) / 8;
                             int bitPos = (wordOffset * 16 + bitOffset) % 8;
                             byte cur = _ram.ReadByte(OFFSET_M + bytePos);
-                            if (value != 0) cur |= (byte)(1 << bitPos);
-                            else cur &= (byte)~(1 << bitPos);
+                            if (value != 0)
+                            {
+                                cur |= (byte)(1 << bitPos);
+                            }
+                            else
+                            {
+                                cur &= (byte)~(1 << bitPos);
+                            }
                             _ram.Write(OFFSET_M + bytePos, cur);
                             return 0;
                         }
-                    case "D":
                     case "W":
+                        {
+                            _ram.Write(OFFSET_W + wordOffset * 2, (short)value);
+                            return 0;
+                        }
+                    case "R":
+                    case "ZR":
+                        {
+                            _ram.Write(OFFSET_R + wordOffset * 2, (short)value);
+                            return 0;
+                        }
+                    case "D":
                     default:
                         {
                             _ram.Write(OFFSET_D + wordOffset * 2, (short)value);
@@ -384,8 +465,18 @@ namespace NetToGXSim3.Core
                             }
                             return 0;
                         }
-                    case "M":
                     case "L":
+                        {
+                            for (int i = 0; i < count; i++)
+                            {
+                                int wOff = wordOffset + i;
+                                byte b0 = _ram.ReadByte(OFFSET_L + wOff * 2);
+                                byte b1 = _ram.ReadByte(OFFSET_L + wOff * 2 + 1);
+                                data[i] = (short)(b0 | (b1 << 8));
+                            }
+                            return 0;
+                        }
+                    case "M":
                     case "F":
                         {
                             for (int i = 0; i < count; i++)
@@ -397,8 +488,24 @@ namespace NetToGXSim3.Core
                             }
                             return 0;
                         }
-                    case "D":
                     case "W":
+                        {
+                            for (int i = 0; i < count; i++)
+                            {
+                                data[i] = _ram.ReadInt16(OFFSET_W + (wordOffset + i) * 2);
+                            }
+                            return 0;
+                        }
+                    case "R":
+                    case "ZR":
+                        {
+                            for (int i = 0; i < count; i++)
+                            {
+                                data[i] = _ram.ReadInt16(OFFSET_R + (wordOffset + i) * 2);
+                            }
+                            return 0;
+                        }
+                    case "D":
                     default:
                         {
                             for (int i = 0; i < count; i++)
@@ -458,8 +565,19 @@ namespace NetToGXSim3.Core
                             }
                             return 0;
                         }
-                    case "M":
                     case "L":
+                        {
+                            for (int i = 0; i < count; i++)
+                            {
+                                int wOff = wordOffset + i;
+                                byte b0 = (byte)(data[i] & 0xFF);
+                                byte b1 = (byte)((data[i] >> 8) & 0xFF);
+                                _ram.Write(OFFSET_L + wOff * 2, b0);
+                                _ram.Write(OFFSET_L + wOff * 2 + 1, b1);
+                            }
+                            return 0;
+                        }
+                    case "M":
                     case "F":
                         {
                             for (int i = 0; i < count; i++)
@@ -472,8 +590,24 @@ namespace NetToGXSim3.Core
                             }
                             return 0;
                         }
-                    case "D":
                     case "W":
+                        {
+                            for (int i = 0; i < count; i++)
+                            {
+                                _ram.Write(OFFSET_W + (wordOffset + i) * 2, data[i]);
+                            }
+                            return 0;
+                        }
+                    case "R":
+                    case "ZR":
+                        {
+                            for (int i = 0; i < count; i++)
+                            {
+                                _ram.Write(OFFSET_R + (wordOffset + i) * 2, data[i]);
+                            }
+                            return 0;
+                        }
+                    case "D":
                     default:
                         {
                             for (int i = 0; i < count; i++)
@@ -510,11 +644,18 @@ namespace NetToGXSim3.Core
                     if (prefix == "X")
                     {
                         b = (byte)(_ram.ReadByte(OFFSET_X_RAM + bytePos) | _ram.ReadByte(OFFSET_X_FORCE + bytePos));
-                        if (_asic != null) b |= _asic.ReadByte(OFFSET_X_ASIC + bytePos);
+                        if (_asic != null)
+                        {
+                            b |= _asic.ReadByte(OFFSET_X_ASIC + bytePos);
+                        }
                     }
                     else if (prefix == "Y")
                     {
                         b = (byte)(_ram.ReadByte(OFFSET_Y_RAM + bytePos) | _ram.ReadByte(OFFSET_Y_FORCE + bytePos));
+                    }
+                    else if (prefix == "L")
+                    {
+                        b = _ram.ReadByte(OFFSET_L + bytePos);
                     }
                     else
                     {
@@ -550,22 +691,40 @@ namespace NetToGXSim3.Core
                     {
                         // 1. Base RAM Input Table
                         byte bRam = _ram.ReadByte(OFFSET_X_RAM + bytePos);
-                        if (bitValues[i] != 0) bRam |= (byte)(1 << bitPos);
-                        else bRam &= (byte)~(1 << bitPos);
+                        if (bitValues[i] != 0)
+                        {
+                            bRam |= (byte)(1 << bitPos);
+                        }
+                        else
+                        {
+                            bRam &= (byte)~(1 << bitPos);
+                        }
                         _ram.Write(OFFSET_X_RAM + bytePos, bRam);
 
                         // 2. Force Input Latch Table
                         byte bForce = _ram.ReadByte(OFFSET_X_FORCE + bytePos);
-                        if (bitValues[i] != 0) bForce |= (byte)(1 << bitPos);
-                        else bForce &= (byte)~(1 << bitPos);
+                        if (bitValues[i] != 0)
+                        {
+                            bForce |= (byte)(1 << bitPos);
+                        }
+                        else
+                        {
+                            bForce &= (byte)~(1 << bitPos);
+                        }
                         _ram.Write(OFFSET_X_FORCE + bytePos, bForce);
 
                         // 3. ASIC Physical Input Image
                         if (_asic != null)
                         {
                             byte bAsic = _asic.ReadByte(OFFSET_X_ASIC + bytePos);
-                            if (bitValues[i] != 0) bAsic |= (byte)(1 << bitPos);
-                            else bAsic &= (byte)~(1 << bitPos);
+                            if (bitValues[i] != 0)
+                            {
+                                bAsic |= (byte)(1 << bitPos);
+                            }
+                            else
+                            {
+                                bAsic &= (byte)~(1 << bitPos);
+                            }
                             _asic.Write(OFFSET_X_ASIC + bytePos, bAsic);
                         }
                     }
@@ -573,21 +732,52 @@ namespace NetToGXSim3.Core
                     {
                         // 1. Base RAM Output Table
                         byte bRam = _ram.ReadByte(OFFSET_Y_RAM + bytePos);
-                        if (bitValues[i] != 0) bRam |= (byte)(1 << bitPos);
-                        else bRam &= (byte)~(1 << bitPos);
+                        if (bitValues[i] != 0)
+                        {
+                            bRam |= (byte)(1 << bitPos);
+                        }
+                        else
+                        {
+                            bRam &= (byte)~(1 << bitPos);
+                        }
                         _ram.Write(OFFSET_Y_RAM + bytePos, bRam);
 
                         // 2. Force Output Latch Table
                         byte bForce = _ram.ReadByte(OFFSET_Y_FORCE + bytePos);
-                        if (bitValues[i] != 0) bForce |= (byte)(1 << bitPos);
-                        else bForce &= (byte)~(1 << bitPos);
+                        if (bitValues[i] != 0)
+                        {
+                            bForce |= (byte)(1 << bitPos);
+                        }
+                        else
+                        {
+                            bForce &= (byte)~(1 << bitPos);
+                        }
                         _ram.Write(OFFSET_Y_FORCE + bytePos, bForce);
+                    }
+                    else if (prefix == "L")
+                    {
+                        byte b = _ram.ReadByte(OFFSET_L + bytePos);
+                        if (bitValues[i] != 0)
+                        {
+                            b |= (byte)(1 << bitPos);
+                        }
+                        else
+                        {
+                            b &= (byte)~(1 << bitPos);
+                        }
+                        _ram.Write(OFFSET_L + bytePos, b);
                     }
                     else
                     {
                         byte b = _ram.ReadByte(OFFSET_M + bytePos);
-                        if (bitValues[i] != 0) b |= (byte)(1 << bitPos);
-                        else b &= (byte)~(1 << bitPos);
+                        if (bitValues[i] != 0)
+                        {
+                            b |= (byte)(1 << bitPos);
+                        }
+                        else
+                        {
+                            b &= (byte)~(1 << bitPos);
+                        }
                         _ram.Write(OFFSET_M + bytePos, b);
                     }
                 }
@@ -625,14 +815,20 @@ namespace NetToGXSim3.Core
                     bitOffset = addr % 16;
                     break;
                 case "M":
-                case "L":
                 case "F":
+                    int.TryParse(numPart, out addr);
+                    wordOffset = addr / 16;
+                    bitOffset = addr % 16;
+                    break;
+                case "L":
                     int.TryParse(numPart, out addr);
                     wordOffset = addr / 16;
                     bitOffset = addr % 16;
                     break;
                 case "D":
                 case "W":
+                case "R":
+                case "ZR":
                 case "TS":
                 case "TN":
                 case "CS":
@@ -643,6 +839,104 @@ namespace NetToGXSim3.Core
                     break;
             }
         }
+
+        #region Strongly-Typed Helper Accessors for OPC and External Bridges
+
+        public bool ReadBit(string deviceType, int address, out bool value)
+        {
+            value = false;
+            string deviceName = $"{deviceType}{address}";
+            int result = ReadDevice(deviceName, out int intVal);
+            if (result == 0)
+            {
+                if (intVal != 0)
+                {
+                    value = true;
+                }
+                else
+                {
+                    value = false;
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public bool WriteBit(string deviceType, int address, bool value)
+        {
+            string deviceName = $"{deviceType}{address}";
+            int intVal = 0;
+            if (value)
+            {
+                intVal = 1;
+            }
+            else
+            {
+                intVal = 0;
+            }
+            int result = WriteDevice(deviceName, intVal);
+            if (result == 0)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public bool ReadWord(string deviceType, int address, out ushort value)
+        {
+            value = 0;
+            string deviceName = $"{deviceType}{address}";
+            int result = ReadDeviceBlockWords(deviceName, 1, out short[] words);
+            if (result == 0 && words != null && words.Length > 0)
+            {
+                value = (ushort)words[0];
+                return true;
+            }
+            return false;
+        }
+
+        public bool WriteWord(string deviceType, int address, ushort value)
+        {
+            string deviceName = $"{deviceType}{address}";
+            short[] words = new short[] { (short)value };
+            int result = WriteDeviceBlockWords(deviceName, 1, words);
+            if (result == 0)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public bool ReadDWord(string deviceType, int address, out uint value)
+        {
+            value = 0;
+            string deviceName = $"{deviceType}{address}";
+            int result = ReadDeviceBlockWords(deviceName, 2, out short[] words);
+            if (result == 0 && words != null && words.Length >= 2)
+            {
+                ushort low = (ushort)words[0];
+                ushort high = (ushort)words[1];
+                value = (uint)(low | (high << 16));
+                return true;
+            }
+            return false;
+        }
+
+        public bool WriteDWord(string deviceType, int address, uint value)
+        {
+            string deviceName = $"{deviceType}{address}";
+            short low = (short)(value & 0xFFFF);
+            short high = (short)((value >> 16) & 0xFFFF);
+            short[] words = new short[] { low, high };
+            int result = WriteDeviceBlockWords(deviceName, 2, words);
+            if (result == 0)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        #endregion
 
         public void Dispose()
         {

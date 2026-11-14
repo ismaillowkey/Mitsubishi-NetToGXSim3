@@ -73,18 +73,53 @@
         <!-- Scrollable Release Notes Content -->
         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,16">
             <StackPanel>
-                <!-- Version 0.6.3 Card -->
+                <!-- Version 0.7.1 Card -->
                 <Border Background="#FFFFFF" CornerRadius="10" Padding="18" Margin="0,0,0,14" BorderBrush="#BAE6FD" BorderThickness="1.5">
                     <StackPanel>
                         <Grid Margin="0,0,0,12">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <Border Background="#0284C7" CornerRadius="6" Padding="8,3" Margin="0,0,10,0">
-                                    <TextBlock Text="v0.6.3" FontWeight="Bold" FontSize="12" Foreground="White"/>
+                                    <TextBlock Text="v0.7.1" FontWeight="Bold" FontSize="12" Foreground="White"/>
                                 </Border>
-                                <TextBlock Text="Rolling Log Buffer &amp; High-Performance Traffic Management" FontSize="14" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                                <TextBlock Text="Native OPC DA 2.05a Classic COM Server &amp; Live Tag Workstation" FontSize="14" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
                                 <Border Background="#ECFDF5" CornerRadius="6" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
                                     <TextBlock Text="CURRENT" FontWeight="Bold" FontSize="10.5" Foreground="#059669"/>
                                 </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="🔌 Full Native OPC DA 2.05a Server Engine" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Integrates a native OPC DA Classic COM server (ProgID: NetToGXSim3.OPCServer.DA) allowing direct connectivity from SCADA and OPC clients (OPC Expert, Kepware, Matrikon, InTouch, WinCC) without any middleware." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="📊 Interactive Tag Workstation &amp; Auto-Save" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Dedicated GUI workstation tab for configuring tags with live values, quality lamps, CSV export/import, default presets (X, Y, M, D, R, W), test write, bit toggle, and automated persistence in opc_tags.json." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="🛠 System-Wide COM Registration &amp; Triple-Write Memory Engine" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Auto-registers in Windows Registry (HKLM &amp; HKCU) and installer setup, paired with sub-microsecond direct shared memory (MMF) access and triple-write synchronization for reliable input/output state handling." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Version 0.6.3 Card -->
+                <Border Background="#FFFFFF" CornerRadius="10" Padding="18" Margin="0,0,0,14" BorderBrush="#E2E8F0" BorderThickness="1">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Background="#64748B" CornerRadius="6" Padding="8,3" Margin="0,0,10,0">
+                                    <TextBlock Text="v0.6.3" FontWeight="Bold" FontSize="12" Foreground="White"/>
+                                </Border>
+                                <TextBlock Text="Rolling Log Buffer &amp; High-Performance Traffic Management" FontSize="14" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Grid>
 

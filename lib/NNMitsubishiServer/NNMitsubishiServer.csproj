@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>NNMitsubishiServer</AssemblyName>
+    <RootNamespace>NNMitsubishiServer</RootNamespace>
+    <Description>Native standalone MC Protocol FX5U / Q-Series Virtual Server Library for .NET Standard without third-party dependencies.</Description>
+    <Version>1.0.0</Version>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+</Project>

@@ -46,7 +46,7 @@ namespace NetToGXSim3.Wpf.Services
             }
             catch { }
 
-            return "0.6.1";
+            return "0.7.1";
         }
     }
 }

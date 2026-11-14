@@ -119,7 +119,19 @@ namespace NetToGXSim3.Core
                     else if (Process.GetProcessesByName("LSimRun3").Length > 0) procName = "LSimRun3 (L)";
                     else if (Process.GetProcessesByName("FSim3Dlg").Length > 0) procName = "FSim3Dlg";
 
-                    // 1. Try ActUtlType (if MX Component is installed)
+                    // 1. Direct GX Simulator 3 Native GXS-IO Engine (Zero latency, sub-microsecond direct shared memory MMF)
+                    if (MemoryBridge.Attach(1, 1) || MemoryBridge.Attach(0, 1) || MemoryBridge.Attach(1, 0) || MemoryBridge.Attach(0, 0))
+                    {
+                        IsConnected = true;
+                        ConnectedEngineName = $"{procName} (Direct Shared Memory MMF)";
+                        LastError = string.Empty;
+                        MemoryMirror?.Stop(); // Pure On-Demand: Direct memory access on every MC request without polling cache
+                        LogMessage?.Invoke($"[GX SIM] Connected directly to {ConnectedEngineName} (Direct Shared Memory MMF - Sub-microsecond Zero Latency)");
+                        ConnectionStateChanged?.Invoke(true);
+                        return true;
+                    }
+
+                    // 2. Fallback COM (Only if direct memory could not be opened)
                     Type? utlType = Type.GetTypeFromProgID("ActUtlType.ActUtlType") ?? Type.GetTypeFromProgID("ActUtlType.ActUtlType.1");
                     if (utlType != null)
                     {
@@ -152,18 +164,6 @@ namespace NetToGXSim3.Core
                             }
                             try { Marshal.ReleaseComObject(utl); } catch { }
                         }
-                    }
-
-                    // 2. Direct GX Simulator 3 Native GXS-IO Engine (Zero external dependencies)
-                    if (MemoryBridge.Attach(1, 1) || MemoryBridge.Attach(0, 1))
-                    {
-                        IsConnected = true;
-                        ConnectedEngineName = $"{procName} (Direct GXS-IO Engine)";
-                        LastError = string.Empty;
-                        MemoryMirror?.Stop(); // Pure On-Demand: Direct memory access on every MC request without polling cache
-                        LogMessage?.Invoke($"[GX SIM] Connected directly to {ConnectedEngineName} (Pure On-Demand MC Protocol)");
-                        ConnectionStateChanged?.Invoke(true);
-                        return true;
                     }
 
 

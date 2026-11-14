@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <ProjectReference Include="..\..\lib\NNMitsubishiServer\NNMitsubishiServer.csproj" />
   </ItemGroup>
 
 </Project>
