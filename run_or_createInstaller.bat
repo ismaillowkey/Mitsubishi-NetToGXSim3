@@ -58,7 +58,9 @@ echo.
 
 :: Extract Product Version dynamically from the published binary
 for /f "usebackq tokens=*" %%v in (`powershell -NoProfile -Command "(Get-Item '%STAGING_DIR%\NetToGXSim3.Wpf.exe').VersionInfo.ProductVersion.Split('+')[0].Trim()"`) do set "APP_VERSION=%%v"
-if not defined APP_VERSION set "APP_VERSION=0.7.1"
+if not defined APP_VERSION (
+    for /f "usebackq tokens=*" %%v in (`powershell -NoProfile -Command "$v = (Get-Item '%STAGING_DIR%\NetToGXSim3.Wpf.exe').VersionInfo.FileVersion; if ($v) { $p = $v.Split('.'); $p[0]+'.'+$p[1]+'.'+$p[2] }"`) do set "APP_VERSION=%%v"
+)
 echo [VERSION] Detected Application Version: %APP_VERSION%
 echo.
 

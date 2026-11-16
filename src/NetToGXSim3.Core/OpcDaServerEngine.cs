@@ -139,6 +139,7 @@ namespace NetToGXSim3.Core
                             tag.QualityCode = OpcDaConstants.OPC_QUALITY_BAD;
                             tag.Value = "---";
                             tag.Timestamp = now;
+                            OpcUaServerEngine.Instance?.SyncTagValue(tag);
                         }
                         else
                         {
@@ -158,12 +159,14 @@ namespace NetToGXSim3.Core
                                     tag.QualityCode = OpcDaConstants.OPC_QUALITY_BAD;
                                     tag.Timestamp = now;
                                 }
+                                OpcUaServerEngine.Instance?.SyncTagValue(tag);
                             }
                             catch
                             {
                                 tag.Quality = "Bad";
                                 tag.QualityCode = OpcDaConstants.OPC_QUALITY_BAD;
                                 tag.Timestamp = now;
+                                OpcUaServerEngine.Instance?.SyncTagValue(tag);
                             }
                         }
                     }

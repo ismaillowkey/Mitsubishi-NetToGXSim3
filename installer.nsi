@@ -1,6 +1,6 @@
 ; ==============================================================================
 ; NSIS Script: NetToGXSim3 Installer
-; Version: 0.7.1
+; Version: 0.8.1
 ; Developed by: Ismail Lowkey
 ; ==============================================================================
 
@@ -13,11 +13,14 @@
 ; --------------------------------------------------
 !define PRODUCT_NAME "NetToGXSim3 by Ismail Lowkey"
 !define PRODUCT_SHORT_NAME "NetToGXSim3"
-!ifndef PRODUCT_VERSION
-  !define PRODUCT_VERSION "0.7.1"
-!endif
 !define PRODUCT_PUBLISHER "Ismail Lowkey"
 !define MAIN_EXE "NetToGXSim3.Wpf.exe"
+
+; Auto-read version from compiled executable if not passed via command line
+!ifndef PRODUCT_VERSION
+  !getdllversion "src\NetToGXSim3.Wpf\obj\publish_staging\${MAIN_EXE}" expv_
+  !define PRODUCT_VERSION "${expv_1}.${expv_2}.${expv_3}"
+!endif
 !define REG_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\GX3Bridge"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\${MAIN_EXE}"
 !define OPC_PROGID "NetToGXSim3.OPCServer.DA"
@@ -87,6 +90,7 @@ Function AutoUninstallOldVersion
         Delete "$DESKTOP\NetToGXSim3.lnk"
         Delete "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\NetToGXSim3.lnk"
         Delete "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\Example Program HMI.lnk"
+        Delete "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\Example HMI.lnk"
         Delete "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\Uninstall.lnk"
         RMDir /r "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3"
         RMDir /r "$R1"
@@ -98,6 +102,7 @@ Function AutoUninstallOldVersion
         Delete "$DESKTOP\NetToGXSim3.lnk"
         Delete "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\NetToGXSim3.lnk"
         Delete "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\Example Program HMI.lnk"
+        Delete "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\Example HMI.lnk"
         Delete "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\Uninstall.lnk"
         RMDir /r "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3"
         RMDir /r "$INSTDIR"
@@ -121,8 +126,14 @@ Section "MainSection" SEC01
     CreateDirectory "$INSTDIR\Resources"
     File /oname=Resources\app_icon.ico "src\NetToGXSim3.Wpf\Resources\app_icon.ico"
 
-    ; Copy Example Program HMI folder
-    SetOutPath "$INSTDIR\Example Program HMI"
+    ; Copy Example HMI folder to C:\Users\Public\NetToGXSim3\Example HMI
+    ReadEnvStr $R3 "PUBLIC"
+    ${If} $R3 == ""
+        StrCpy $R3 "C:\Users\Public"
+    ${EndIf}
+    StrCpy $R3 "$R3\NetToGXSim3\Example HMI"
+    CreateDirectory "$R3"
+    SetOutPath "$R3"
     File /r "Example Program HMI\*.*"
     SetOutPath "$INSTDIR"
 
@@ -135,7 +146,7 @@ Section "MainSection" SEC01
     ; ----------------------------------------------
     CreateDirectory "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3"
     CreateShortcut "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\NetToGXSim3.lnk" "$INSTDIR\${MAIN_EXE}" "" "$INSTDIR\${MAIN_EXE}" 0
-    CreateShortcut "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\Example Program HMI.lnk" "$INSTDIR\Example Program HMI"
+    CreateShortcut "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\Example HMI.lnk" "$R3"
     CreateShortcut "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\Uninstall.lnk" "$INSTDIR\Uninstall.exe" "" "$INSTDIR\Uninstall.exe" 0
 
     ; Desktop Shortcut
@@ -214,12 +225,21 @@ Section "Uninstall"
     Delete "$DESKTOP\NetToGXSim3.lnk"
     Delete "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\NetToGXSim3.lnk"
     Delete "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\Example Program HMI.lnk"
+    Delete "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\Example HMI.lnk"
     Delete "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3\Uninstall.lnk"
     RMDir /r "$SMPROGRAMS\MELSOFT NetToGXSim\NetToGXSim3"
     RMDir "$SMPROGRAMS\MELSOFT NetToGXSim"
 
     ; Remove Installed Files
     RMDir /r "$INSTDIR"
+
+    ; Remove Example HMI from Public directory
+    ReadEnvStr $R3 "PUBLIC"
+    ${If} $R3 == ""
+        StrCpy $R3 "C:\Users\Public"
+    ${EndIf}
+    RMDir /r "$R3\NetToGXSim3\Example HMI"
+    RMDir "$R3\NetToGXSim3"
 
     ; Remove Registry Keys
     DeleteRegKey HKLM "${REG_KEY}"

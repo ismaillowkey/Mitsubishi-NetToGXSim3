@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net472;netstandard2.0;net8.0-windows</TargetFrameworks>
+    <TargetFrameworks>net472;net8.0-windows</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <PlatformTarget>x86</PlatformTarget>
     <Nullable>enable</Nullable>
@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Server" Version="1.5.378.182" />
     <ProjectReference Include="..\..\lib\NNMitsubishiServer\NNMitsubishiServer.csproj" />
   </ItemGroup>
 

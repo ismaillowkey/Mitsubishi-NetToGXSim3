@@ -13,40 +13,68 @@ namespace NetToGXSim3.Wpf.Services
         private static string? _displayVersion;
 
         /// <summary>
-        /// Gets the clean semantic version string (e.g. "0.6.1").
+        /// Gets the clean semantic version string (e.g. "0.7.2").
         /// </summary>
-        public static string Version => _version ??= ResolveVersion();
+        public static string Version
+        {
+            get
+            {
+                if (_version == null)
+                {
+                    _version = ResolveVersion();
+                }
+                return _version;
+            }
+        }
 
         /// <summary>
-        /// Gets the display version with leading 'v' (e.g. "v0.6.1").
+        /// Gets the display version with leading 'v' (e.g. "v0.7.2").
         /// </summary>
-        public static string DisplayVersion => _displayVersion ??= $"v{Version}";
+        public static string DisplayVersion
+        {
+            get
+            {
+                if (_displayVersion == null)
+                {
+                    _displayVersion = "v" + Version;
+                }
+                return _displayVersion;
+            }
+        }
 
         private static string ResolveVersion()
         {
             try
             {
-                var asm = Assembly.GetExecutingAssembly();
+                Assembly asm = Assembly.GetExecutingAssembly();
 
-                // 1. Try InformationalVersion (e.g. "0.6.1" or "0.6.1+sha")
-                var infoAttr = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+                // 1. Coba baca dari AssemblyInformationalVersion (dihasilkan otomatis dari Directory.Build.props)
+                AssemblyInformationalVersionAttribute? infoAttr = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
                 if (infoAttr != null && !string.IsNullOrWhiteSpace(infoAttr.InformationalVersion))
                 {
                     string infoVer = infoAttr.InformationalVersion;
                     int plusIdx = infoVer.IndexOf('+');
-                    return plusIdx > 0 ? infoVer.Substring(0, plusIdx).Trim() : infoVer.Trim();
+                    if (plusIdx > 0)
+                    {
+                        return infoVer.Substring(0, plusIdx).Trim();
+                    }
+                    return infoVer.Trim();
                 }
 
-                // 2. Fallback to AssemblyName.Version
-                var asmVer = asm.GetName().Version;
+                // 2. Fallback baca dari Assembly Version
+                Version? asmVer = asm.GetName().Version;
                 if (asmVer != null)
                 {
                     return $"{asmVer.Major}.{asmVer.Minor}.{asmVer.Build}";
                 }
             }
-            catch { }
+            catch
+            {
+                // Abaikan error dan gunakan versi Core
+            }
 
-            return "0.7.1";
+            // 3. Fallback dinamis ke NetToGXSim3.Core.AppVersionInfo (juga membaca dari assembly assembly version)
+            return NetToGXSim3.Core.AppVersionInfo.Version;
         }
     }
 }

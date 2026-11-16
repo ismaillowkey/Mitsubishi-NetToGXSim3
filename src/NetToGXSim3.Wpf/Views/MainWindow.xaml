@@ -66,21 +66,146 @@
             </Setter>
         </Style>
 
+        <!-- Style TabItem Utama dengan Border yang Menyatu ke Kotak Tab -->
+        <!-- Style TabItem Utama dengan Border yang Menyatu ke Kotak Tab -->
         <Style x:Key="ModernTabItem" TargetType="TabItem">
+            <Setter Property="Foreground" Value="#475569"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabItem">
-                        <Border x:Name="tabBorder" Background="#F1F5F9" CornerRadius="8,8,0,0" Padding="14,8" Margin="0,0,4,0" BorderBrush="#E2E8F0" BorderThickness="1,1,1,0">
+                        <Border x:Name="tabBorder" 
+                                Background="#E2E8F0" 
+                                CornerRadius="8,8,0,0" 
+                                Padding="16,8" 
+                                Margin="0,0,4,0" 
+                                BorderBrush="#94A3B8" 
+                                BorderThickness="1.5,1.5,1.5,1.5">
                             <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter TargetName="tabBorder" Property="Background" Value="#FFFFFF"/>
                                 <Setter TargetName="tabBorder" Property="BorderBrush" Value="#0284C7"/>
+                                <Setter TargetName="tabBorder" Property="BorderThickness" Value="1.5,3,1.5,0"/>
+                                <Setter TargetName="tabBorder" Property="Margin" Value="0,0,4,-1"/>
+                                <Setter TargetName="tabBorder" Property="Padding" Value="16,9,16,9"/>
                                 <Setter Property="Foreground" Value="#0284C7"/>
                                 <Setter Property="FontWeight" Value="Bold"/>
+                                <Setter Property="Panel.ZIndex" Value="20"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="tabBorder" Property="Background" Value="#F1F5F9"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style TabControl Utama dengan Kotak Pembatas Konten Jelas -->
+        <Style x:Key="ModernTabControl" TargetType="TabControl">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="BorderBrush" Value="#94A3B8"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabControl">
+                        <Grid KeyboardNavigation.TabNavigation="Local">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Header Barisan Tab -->
+                            <TabPanel Grid.Row="0" IsItemsHost="True" Panel.ZIndex="10" Margin="4,0,4,-1"/>
+                            
+                            <!-- Kotak Tab (Pembatas Konten Tab dengan Border Solid) -->
+                            <Border Grid.Row="1" 
+                                    Background="#FFFFFF" 
+                                    BorderBrush="#94A3B8" 
+                                    BorderThickness="1.5" 
+                                    CornerRadius="0,8,8,8" 
+                                    Padding="14"
+                                    Panel.ZIndex="0">
+                                <ContentPresenter x:Name="PART_SelectedContentHost" 
+                                                  ContentSource="SelectedContent"/>
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style Sub-Tab Item (Modbus Sub-Tabs) -->
+        <Style x:Key="ModernSubTabItem" TargetType="TabItem">
+            <Setter Property="Foreground" Value="#475569"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="subTabBorder" 
+                                Background="#E2E8F0" 
+                                CornerRadius="6,6,0,0" 
+                                Padding="14,6" 
+                                Margin="0,0,3,0" 
+                                BorderBrush="#94A3B8" 
+                                BorderThickness="1,1,1,1">
+                            <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="subTabBorder" Property="Background" Value="#F8FAFC"/>
+                                <Setter TargetName="subTabBorder" Property="BorderBrush" Value="#D97706"/>
+                                <Setter TargetName="subTabBorder" Property="BorderThickness" Value="1.5,2.5,1.5,0"/>
+                                <Setter TargetName="subTabBorder" Property="Margin" Value="0,0,3,-1"/>
+                                <Setter TargetName="subTabBorder" Property="Padding" Value="14,7,14,7"/>
+                                <Setter Property="Foreground" Value="#D97706"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                                <Setter Property="Panel.ZIndex" Value="20"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="subTabBorder" Property="Background" Value="#F1F5F9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style Sub-TabControl (Kotak Sub-Tab Modbus) -->
+        <Style x:Key="ModernSubTabControl" TargetType="TabControl">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="Background" Value="#F8FAFC"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabControl">
+                        <Grid KeyboardNavigation.TabNavigation="Local">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Header Barisan Sub-Tab -->
+                            <TabPanel Grid.Row="0" IsItemsHost="True" Panel.ZIndex="10" Margin="4,0,4,-1"/>
+                            
+                            <!-- Kotak Pembatas Konten Sub-Tab -->
+                            <Border Grid.Row="1" 
+                                    Background="#F8FAFC" 
+                                    BorderBrush="#CBD5E1" 
+                                    BorderThickness="1.5" 
+                                    CornerRadius="0,8,8,8" 
+                                    Padding="10"
+                                    Panel.ZIndex="0">
+                                <ContentPresenter x:Name="PART_SelectedContentHost" 
+                                                  ContentSource="SelectedContent"/>
+                            </Border>
+                        </Grid>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -173,7 +298,6 @@
                                     <TextBlock Text="FX5 / iQ-R" FontSize="11" FontWeight="Bold" Foreground="#059669" />
                                 </Border>
                             </StackPanel>
-                            <TextBlock Text="Mitsubishi GX Works 3 Simulator Network Bridge (MC Protocol A-1E / QnA-3E)" FontSize="11.5" Foreground="#64748B" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
                     </StackPanel>
 
@@ -326,13 +450,13 @@
                     </Border>
 
                     <!-- Main Tabs -->
-                    <TabControl Grid.Row="2" x:Name="MainTabControl" Background="Transparent" BorderThickness="0">
+                    <TabControl Grid.Row="2" x:Name="MainTabControl" Style="{StaticResource ModernTabControl}" Margin="0,4,0,0">
                         <!-- TAB 1: I/O RACK (Inputs X0-X7 & Outputs Y0-Y7) -->
                         <TabItem Header="I/O Rack (X0 - X7 &amp; Y0 - Y7)" Style="{StaticResource ModernTabItem}">
                             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                                <StackPanel Margin="0,8,0,0">
+                                <StackPanel>
                                     <!-- INPUT RACK CARD (X0 to X7) -->
-                                    <Border Background="#FFFFFF" CornerRadius="10" Padding="12,8" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Background="#F8FAFC" CornerRadius="10" Padding="14,10" Margin="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <StackPanel>
                                             <Grid Margin="0,0,0,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -348,7 +472,7 @@
                                     </Border>
 
                                     <!-- OUTPUT RACK CARD (Y0 to Y17) -->
-                                    <Border Background="#FFFFFF" CornerRadius="10" Padding="12,8" Margin="0,0,0,0" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Border Background="#F8FAFC" CornerRadius="10" Padding="14,10" Margin="0,0,0,0" BorderBrush="#E2E8F0" BorderThickness="1">
                                         <StackPanel>
                                             <Grid Margin="0,0,0,6">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -376,7 +500,7 @@
                                 </StackPanel>
                             </TabItem.Header>
 
-                            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,10,0,0">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0">
                                 <StackPanel Margin="0,0,10,0">
                                     <!-- OPC Server State Control Card -->
                                     <Border Background="#FFFFFF" CornerRadius="10" Padding="16,12" Margin="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="1">
@@ -661,7 +785,557 @@
                             </ScrollViewer>
                         </TabItem>
 
-                        <!-- TAB 3: INSPECTOR & ACTIVITY LOG -->
+                        <!-- TAB 3: OPC UA SERVER (MODERN UA) -->
+                        <TabItem x:Name="TabOpcUaServer" Style="{StaticResource ModernTabItem}">
+                            <TabItem.Header>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Width="7" Height="7" CornerRadius="3.5" Background="#0D9488" Margin="0,0,7,0"/>
+                                    <TextBlock Text="OPC UA Server" FontWeight="Bold"/>
+                                    <TextBlock Text="(opc.tcp)" FontSize="11" Foreground="#64748B" Margin="6,0,0,0"/>
+                                </StackPanel>
+                            </TabItem.Header>
+
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0">
+                                <StackPanel Margin="0,0,10,0">
+                                    <!-- OPC UA Server State Control Card -->
+                                    <Border Background="#FFFFFF" CornerRadius="10" Padding="16,12" Margin="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Server State Info -->
+                                            <StackPanel Grid.Column="0">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,4">
+                                                    <Ellipse x:Name="OpcUaStatusLed" Width="10" Height="10" Fill="#10B981" Margin="0,0,8,0"/>
+                                                    <TextBlock x:Name="TxtOpcUaServerStatus" Text="OPC UA SERVER: RUNNING (AUTO-STARTED)" FontSize="13" FontWeight="Bold" Foreground="#047857"/>
+                                                    <Border Background="#ECFDF5" CornerRadius="4" Padding="6,2" Margin="10,0,0,0">
+                                                        <TextBlock Text="Anonymous Allowed" FontSize="10" FontWeight="Bold" Foreground="#059669"/>
+                                                    </Border>
+                                                    <Border Background="#EFF6FF" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                                        <TextBlock Text="Auto-Start ON" FontSize="10" FontWeight="Bold" Foreground="#2563EB"/>
+                                                    </Border>
+                                                </StackPanel>
+
+                                                <!-- Row 1: Local Endpoint, Port, Sessions, Tags -->
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,0,4">
+                                                    <TextBlock Text="Local Endpoint: " FontSize="11" Foreground="#64748B" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                    <TextBlock x:Name="TxtOpcUaEndpoint" Text="opc.tcp://localhost:48400/nettogxsim3" FontSize="11" Foreground="#0D9488" FontWeight="Bold" Margin="0,0,16,0" VerticalAlignment="Center"/>
+
+                                                    <TextBlock Text="Port: " FontSize="11" Foreground="#64748B" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                    <Border Background="#F8FAFC" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Height="26" Margin="0,0,16,0" VerticalAlignment="Center">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBox x:Name="TxtOpcUaPort" Text="48400" Width="52" BorderThickness="0" Background="Transparent" VerticalAlignment="Center" TextAlignment="Center" FontWeight="Bold" FontSize="11" Foreground="#0F172A"/>
+                                                            <StackPanel VerticalAlignment="Center" Margin="0,0,2,0">
+                                                                <Button x:Name="BtnOpcUaPortUp" Content="▲" FontSize="7" Width="16" Height="11" Padding="0" Background="#E2E8F0" BorderThickness="0" Click="BtnOpcUaPortUp_Click" Cursor="Hand"/>
+                                                                <Button x:Name="BtnOpcUaPortDown" Content="▼" FontSize="7" Width="16" Height="11" Padding="0" Background="#E2E8F0" BorderThickness="0" Margin="0,1,0,0" Click="BtnOpcUaPortDown_Click" Cursor="Hand"/>
+                                                            </StackPanel>
+                                                        </StackPanel>
+                                                    </Border>
+
+                                                    <TextBlock Text="Active Sessions: " FontSize="11" Foreground="#64748B" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                    <TextBlock x:Name="TxtOpcUaSessionsCount" Text="0" FontSize="11" Foreground="#0F172A" FontWeight="Bold" Margin="0,0,16,0" VerticalAlignment="Center"/>
+
+                                                    <TextBlock Text="Total Tags: " FontSize="11" Foreground="#64748B" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                    <TextBlock x:Name="TxtOpcUaTotalTags" Text="0" FontSize="11" Foreground="#0F172A" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                </StackPanel>
+
+                                                <!-- Row 2: Network Endpoint (Diletakkan tepat di baris bawah Local Endpoint) -->
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,0">
+                                                    <TextBlock Text="Network Endpoint: " FontSize="11" Foreground="#64748B" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                    <TextBlock x:Name="TxtOpcUaNetworkEndpoint" Text="opc.tcp://[Host]:48400/nettogxsim3" FontSize="11" Foreground="#0284C7" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <!-- Server Actions -->
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button x:Name="BtnStartOpcUaServer" Content="▶ Start Server" Style="{StaticResource ModernButton}" Background="#10B981" Padding="12,6" Margin="0,0,8,0" Visibility="Collapsed" Click="BtnStartOpcUaServer_Click"/>
+                                                <Button x:Name="BtnStopOpcUaServer" Content="⏹ Stop Server" Style="{StaticResource ModernButton}" Background="#EF4444" Padding="12,6" Margin="0,0,8,0" Visibility="Visible" Click="BtnStopOpcUaServer_Click"/>
+                                                <Button x:Name="BtnCopyUaEndpoint" Content="📋 Copy Endpoint" Style="{StaticResource ModernButton}" Background="#0D9488" Padding="12,6" Click="BtnCopyUaEndpoint_Click"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Port Collision Notification Banner (Hidden by default, visible if port 48400 occupied) -->
+                                    <Border x:Name="BorderOpcUaPortNotice" Background="#FFFBEB" CornerRadius="8" Padding="12,8" Margin="0,0,0,10" BorderBrush="#FCD34D" BorderThickness="1" Visibility="Collapsed">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="⚠️" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="TxtOpcUaPortNotice" Grid.Column="1" FontSize="11" Foreground="#B45309" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center" Text="Port 48400 was occupied. Automatically switched to port 48401."/>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Synchronized Tags Table -->
+                                    <Border Background="#FFFFFF" CornerRadius="10" Padding="16,14" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <StackPanel>
+                                            <Grid Margin="0,0,0,10">
+                                                <TextBlock Text="LIVE SYNCHRONIZED OPC UA TAGS (ADDRESS SPACE: ns=2;s=NetToGXSim3.*)" FontSize="12.5" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                                            </Grid>
+
+                                            <DataGrid x:Name="DgOpcUaTags"
+                                                       AutoGenerateColumns="False"
+                                                       IsReadOnly="True"
+                                                       CanUserAddRows="False"
+                                                       CanUserDeleteRows="False"
+                                                       SelectionMode="Single"
+                                                       HeadersVisibility="Column"
+                                                       GridLinesVisibility="Horizontal"
+                                                       HorizontalGridLinesBrush="#E2E8F0"
+                                                       Background="#FFFFFF"
+                                                       AlternatingRowBackground="#F8FAFC"
+                                                       RowHeight="30"
+                                                       FontSize="12"
+                                                       BorderBrush="#E2E8F0"
+                                                       BorderThickness="1">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header="Tag Name" Binding="{Binding TagName}" Width="150">
+                                                        <DataGridTextColumn.ElementStyle>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                <Setter Property="Foreground" Value="#0F172A"/>
+                                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                                <Setter Property="Margin" Value="6,0"/>
+                                                            </Style>
+                                                        </DataGridTextColumn.ElementStyle>
+                                                    </DataGridTextColumn>
+
+                                                    <DataGridTextColumn Header="OPC UA NodeId" Binding="{Binding TagName, StringFormat='ns=2;s=NetToGXSim3.{0}'}" Width="210">
+                                                        <DataGridTextColumn.ElementStyle>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="FontFamily" Value="Consolas"/>
+                                                                <Setter Property="FontSize" Value="11"/>
+                                                                <Setter Property="Foreground" Value="#0D9488"/>
+                                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                                <Setter Property="Margin" Value="6,0"/>
+                                                            </Style>
+                                                        </DataGridTextColumn.ElementStyle>
+                                                    </DataGridTextColumn>
+
+                                                    <DataGridTextColumn Header="PLC Device" Binding="{Binding Address}" Width="100">
+                                                        <DataGridTextColumn.ElementStyle>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                                <Setter Property="FontFamily" Value="Consolas"/>
+                                                                <Setter Property="Foreground" Value="#0284C7"/>
+                                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                                <Setter Property="Margin" Value="6,0"/>
+                                                            </Style>
+                                                        </DataGridTextColumn.ElementStyle>
+                                                    </DataGridTextColumn>
+
+                                                    <DataGridTextColumn Header="Data Type" Binding="{Binding DataType}" Width="85">
+                                                        <DataGridTextColumn.ElementStyle>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="FontSize" Value="11"/>
+                                                                <Setter Property="Foreground" Value="#475569"/>
+                                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                                <Setter Property="Margin" Value="6,0"/>
+                                                            </Style>
+                                                        </DataGridTextColumn.ElementStyle>
+                                                    </DataGridTextColumn>
+
+                                                    <DataGridTextColumn Header="Live Value" Binding="{Binding Value}" Width="130">
+                                                        <DataGridTextColumn.ElementStyle>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                                <Setter Property="FontFamily" Value="Consolas"/>
+                                                                <Setter Property="Foreground" Value="#047857"/>
+                                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                                <Setter Property="Margin" Value="6,0"/>
+                                                            </Style>
+                                                        </DataGridTextColumn.ElementStyle>
+                                                    </DataGridTextColumn>
+
+                                                    <DataGridTemplateColumn Header="Quality" Width="100">
+                                                        <DataGridTemplateColumn.CellTemplate>
+                                                            <DataTemplate>
+                                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0">
+                                                                    <Border Width="8" Height="8" CornerRadius="4" Margin="0,0,6,0">
+                                                                        <Border.Style>
+                                                                            <Style TargetType="Border">
+                                                                                <Setter Property="Background" Value="#EF4444"/>
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding Quality}" Value="Good">
+                                                                                        <Setter Property="Background" Value="#10B981"/>
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </Border.Style>
+                                                                    </Border>
+                                                                    <TextBlock Text="{Binding Quality}" FontSize="11" Foreground="#475569"/>
+                                                                </StackPanel>
+                                                            </DataTemplate>
+                                                        </DataGridTemplateColumn.CellTemplate>
+                                                    </DataGridTemplateColumn>
+
+                                                    <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp, StringFormat='HH:mm:ss.fff'}" Width="*">
+                                                        <DataGridTextColumn.ElementStyle>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="FontSize" Value="11"/>
+                                                                <Setter Property="FontFamily" Value="Consolas"/>
+                                                                <Setter Property="Foreground" Value="#64748B"/>
+                                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                                <Setter Property="Margin" Value="6,0"/>
+                                                            </Style>
+                                                        </DataGridTextColumn.ElementStyle>
+                                                    </DataGridTextColumn>
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- TAB 4: MODBUS TCP SERVER -->
+                        <TabItem x:Name="TabModbusTcpServer" Style="{StaticResource ModernTabItem}">
+                            <TabItem.Header>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Width="7" Height="7" CornerRadius="3.5" Background="#D97706" Margin="0,0,7,0"/>
+                                    <TextBlock Text="Modbus TCP Server" FontWeight="Bold"/>
+                                    <TextBlock x:Name="TxtModbusPortHeader" Text="(Port 5020)" FontSize="11" Foreground="#64748B" Margin="6,0,0,0"/>
+                                </StackPanel>
+                            </TabItem.Header>
+
+                            <Grid Margin="0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Server Settings Card -->
+                                <Border Grid.Row="0" Background="#FFFFFF" CornerRadius="10" Padding="16,12" Margin="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Setting Left Column -->
+                                        <StackPanel Grid.Column="0">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+                                                <Ellipse x:Name="ModbusStatusLed" Width="10" Height="10" Fill="#10B981" Margin="0,0,8,0"/>
+                                                <TextBlock x:Name="TxtModbusServerStatus" Text="MODBUS TCP SERVER: RUNNING (AUTO-STARTED)" FontSize="13" FontWeight="Bold" Foreground="#047857"/>
+                                                <Border Background="#FEF3C7" CornerRadius="4" Padding="6,2" Margin="10,0,0,0">
+                                                    <TextBlock x:Name="BadgeZeroBased" Text="Zero-Based Addressing: ON" FontSize="10" FontWeight="Bold" Foreground="#B45309"/>
+                                                </Border>
+                                                <Border Background="#EFF6FF" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                                    <TextBlock Text="Auto-Start ON" FontSize="10" FontWeight="Bold" Foreground="#2563EB"/>
+                                                </Border>
+                                            </StackPanel>
+
+                                            <WrapPanel VerticalAlignment="Center">
+                                                <TextBlock Text="Port: " FontSize="12" FontWeight="SemiBold" Foreground="#334155" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                <Border Background="#F8FAFC" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Height="28" Margin="0,0,16,0" VerticalAlignment="Center">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBox x:Name="TxtModbusPort" Text="5020" Width="55" BorderThickness="0" Background="Transparent" VerticalAlignment="Center" TextAlignment="Center" FontWeight="Bold" FontSize="12" Foreground="#0F172A" TextChanged="TxtModbusPort_TextChanged"/>
+                                                        <StackPanel VerticalAlignment="Center" Margin="0,0,2,0">
+                                                            <Button x:Name="BtnModbusPortUp" Content="▲" FontSize="7" Width="16" Height="12" Padding="0" Background="#E2E8F0" BorderThickness="0" Click="BtnModbusPortUp_Click" Cursor="Hand"/>
+                                                            <Button x:Name="BtnModbusPortDown" Content="▼" FontSize="7" Width="16" Height="12" Padding="0" Background="#E2E8F0" BorderThickness="0" Margin="0,1,0,0" Click="BtnModbusPortDown_Click" Cursor="Hand"/>
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <CheckBox x:Name="ChkZeroBasedAddressing" Content="Zero-Based Addressing" IsChecked="True" FontSize="12" FontWeight="SemiBold" Foreground="#334155" VerticalAlignment="Center" Margin="0,0,20,0" Checked="ChkZeroBasedAddressing_Changed" Unchecked="ChkZeroBasedAddressing_Changed"/>
+
+                                                <TextBlock Text="Total Requests: " FontSize="11" Foreground="#64748B" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                <TextBlock x:Name="TxtModbusRequests" Text="0" FontSize="11" Foreground="#0F172A" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,16,0"/>
+
+                                                <TextBlock Text="Active Clients: " FontSize="11" Foreground="#64748B" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                <TextBlock x:Name="TxtModbusClients" Text="0" FontSize="11" Foreground="#0F172A" FontWeight="Bold" VerticalAlignment="Center"/>
+                                            </WrapPanel>
+                                        </StackPanel>
+
+                                        <!-- Setting Right Column: Start / Stop -->
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Button x:Name="BtnStartModbusServer" Content="▶ Start Server" Style="{StaticResource ModernButton}" Background="#10B981" Padding="12,6" Margin="0,0,8,0" Visibility="Collapsed" Click="BtnStartModbusServer_Click"/>
+                                            <Button x:Name="BtnStopModbusServer" Content="⏹ Stop Server" Style="{StaticResource ModernButton}" Background="#EF4444" Padding="12,6" Visibility="Visible" Click="BtnStopModbusServer_Click"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <!-- 4 Sub-Tabs: Coil, Discrete Input, Holding Register, Input Register -->
+                                <TabControl Grid.Row="1" x:Name="TabControlModbusSub" Style="{StaticResource ModernSubTabControl}">
+                                    <!-- Sub-Tab 1: Coil (0x) -->
+                                    <TabItem Header="Coil (0x - Y &amp; M)" Style="{StaticResource ModernSubTabItem}">
+                                        <DataGrid x:Name="DgModbusCoil" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" 
+                                                  HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F1F5F9" 
+                                                  RowHeight="26" FontSize="12" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" 
+                                                  SelectionMode="Single" SelectionUnit="FullRow" EnableRowVirtualization="True"
+                                                  VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                                                  ScrollViewer.CanContentScroll="True" CellEditEnding="DgModbus_CellEditEnding">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="No" Binding="{Binding No}" Width="65" IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#64748B"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <DataGridTextColumn Header="Modbus Address" Binding="{Binding ModbusAddress}" Width="120" IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                            <Setter Property="FontFamily" Value="Consolas"/>
+                                                            <Setter Property="Foreground" Value="#D97706"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="Margin" Value="6,0"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <DataGridTextColumn Header="Device PLC" Binding="{Binding PlcDevice}" Width="110" IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                            <Setter Property="FontFamily" Value="Consolas"/>
+                                                            <Setter Property="Foreground" Value="#0284C7"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="Margin" Value="6,0"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <DataGridTextColumn Header="Keterangan" Binding="{Binding Description}" Width="*" IsReadOnly="False">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="Margin" Value="6,0"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <DataGridTextColumn Header="Nilai / Status" Binding="{Binding ValueText}" Width="110" IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                            <Setter Property="FontFamily" Value="Consolas"/>
+                                                            <Setter Property="Foreground" Value="#047857"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </TabItem>
+
+                                    <!-- Sub-Tab 2: Discrete Input (1x) -->
+                                    <TabItem Header="Discrete Input (1x - X)" Style="{StaticResource ModernSubTabItem}">
+                                        <DataGrid x:Name="DgModbusDiscrete" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" 
+                                                  HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F1F5F9" 
+                                                  RowHeight="26" FontSize="12" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" 
+                                                  SelectionMode="Single" SelectionUnit="FullRow" EnableRowVirtualization="True"
+                                                  VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                                                  ScrollViewer.CanContentScroll="True" CellEditEnding="DgModbus_CellEditEnding">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="No" Binding="{Binding No}" Width="65" IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#64748B"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <DataGridTextColumn Header="Modbus Address" Binding="{Binding ModbusAddress}" Width="120" IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                            <Setter Property="FontFamily" Value="Consolas"/>
+                                                            <Setter Property="Foreground" Value="#D97706"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="Margin" Value="6,0"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <DataGridTextColumn Header="Device PLC" Binding="{Binding PlcDevice}" Width="110" IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                            <Setter Property="FontFamily" Value="Consolas"/>
+                                                            <Setter Property="Foreground" Value="#0284C7"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="Margin" Value="6,0"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <DataGridTextColumn Header="Keterangan" Binding="{Binding Description}" Width="*" IsReadOnly="False">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="Margin" Value="6,0"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <DataGridTextColumn Header="Nilai / Status" Binding="{Binding ValueText}" Width="110" IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                            <Setter Property="FontFamily" Value="Consolas"/>
+                                                            <Setter Property="Foreground" Value="#047857"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </TabItem>
+
+                                    <!-- Sub-Tab 3: Holding Register (4x) -->
+                                    <TabItem Header="Holding Register (4x - D)" Style="{StaticResource ModernSubTabItem}">
+                                        <DataGrid x:Name="DgModbusHolding" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" 
+                                                  HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F1F5F9" 
+                                                  RowHeight="26" FontSize="12" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" 
+                                                  SelectionMode="Single" SelectionUnit="FullRow" EnableRowVirtualization="True"
+                                                  VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                                                  ScrollViewer.CanContentScroll="True" CellEditEnding="DgModbus_CellEditEnding">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="No" Binding="{Binding No}" Width="65" IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#64748B"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <DataGridTextColumn Header="Modbus Address" Binding="{Binding ModbusAddress}" Width="120" IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                            <Setter Property="FontFamily" Value="Consolas"/>
+                                                            <Setter Property="Foreground" Value="#D97706"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="Margin" Value="6,0"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <DataGridTextColumn Header="Device PLC" Binding="{Binding PlcDevice}" Width="110" IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                            <Setter Property="FontFamily" Value="Consolas"/>
+                                                            <Setter Property="Foreground" Value="#0284C7"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="Margin" Value="6,0"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <DataGridTextColumn Header="Keterangan" Binding="{Binding Description}" Width="*" IsReadOnly="False">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="Margin" Value="6,0"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <DataGridTextColumn Header="Nilai / Status" Binding="{Binding ValueText}" Width="110" IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                            <Setter Property="FontFamily" Value="Consolas"/>
+                                                            <Setter Property="Foreground" Value="#047857"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </TabItem>
+
+                                    <!-- Sub-Tab 4: Input Register (3x) -->
+                                    <TabItem Header="Input Register (3x - D)" Style="{StaticResource ModernSubTabItem}">
+                                        <DataGrid x:Name="DgModbusInput" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" 
+                                                  HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F1F5F9" 
+                                                  RowHeight="26" FontSize="12" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" 
+                                                  SelectionMode="Single" SelectionUnit="FullRow" EnableRowVirtualization="True"
+                                                  VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                                                  ScrollViewer.CanContentScroll="True" CellEditEnding="DgModbus_CellEditEnding">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="No" Binding="{Binding No}" Width="65" IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#64748B"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <DataGridTextColumn Header="Modbus Address" Binding="{Binding ModbusAddress}" Width="120" IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                            <Setter Property="FontFamily" Value="Consolas"/>
+                                                            <Setter Property="Foreground" Value="#D97706"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="Margin" Value="6,0"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <DataGridTextColumn Header="Device PLC" Binding="{Binding PlcDevice}" Width="110" IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                            <Setter Property="FontFamily" Value="Consolas"/>
+                                                            <Setter Property="Foreground" Value="#0284C7"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="Margin" Value="6,0"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <DataGridTextColumn Header="Keterangan" Binding="{Binding Description}" Width="*" IsReadOnly="False">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#1E293B"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="Margin" Value="6,0"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <DataGridTextColumn Header="Nilai / Status" Binding="{Binding ValueText}" Width="110" IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                            <Setter Property="FontFamily" Value="Consolas"/>
+                                                            <Setter Property="Foreground" Value="#047857"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </TabItem>
+                                </TabControl>
+                            </Grid>
+                        </TabItem>
+
+                        <!-- TAB 5: INSPECTOR & ACTIVITY LOG -->
                         <TabItem x:Name="TabAdvancedInspector" Style="{StaticResource ModernTabItem}">
                             <TabItem.Header>
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -670,7 +1344,7 @@
                                 </StackPanel>
                             </TabItem.Header>
 
-                            <Grid Margin="0,8,0,0">
+                            <Grid Margin="0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="380"/>
                                     <ColumnDefinition Width="16"/>

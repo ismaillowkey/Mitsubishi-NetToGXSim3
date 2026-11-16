@@ -1,10 +1,16 @@
+using System;
+using System.Reflection;
+
 namespace NetToGXSim3.Core
 {
     public static class AppVersionInfo
     {
-        public const string Version = "0.7.1";
-        public const int Major = 0;
-        public const int Minor = 7;
-        public const int Build = 1;
+        private static readonly Version _version = typeof(AppVersionInfo).Assembly.GetName().Version ?? new Version(0, 0, 0, 0);
+
+        public static Version VersionObject => _version;
+        public static string Version => $"{_version.Major}.{_version.Minor}.{_version.Build}";
+        public static int Major => _version.Major;
+        public static int Minor => _version.Minor;
+        public static int Build => _version.Build;
     }
 }

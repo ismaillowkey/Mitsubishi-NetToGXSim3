@@ -73,18 +73,95 @@
         <!-- Scrollable Release Notes Content -->
         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,16">
             <StackPanel>
-                <!-- Version 0.7.1 Card -->
+                <!-- Version 0.8.1 Card -->
                 <Border Background="#FFFFFF" CornerRadius="10" Padding="18" Margin="0,0,0,14" BorderBrush="#BAE6FD" BorderThickness="1.5">
                     <StackPanel>
                         <Grid Margin="0,0,0,12">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <Border Background="#0284C7" CornerRadius="6" Padding="8,3" Margin="0,0,10,0">
-                                    <TextBlock Text="v0.7.1" FontWeight="Bold" FontSize="12" Foreground="White"/>
+                                <Border Background="#D97706" CornerRadius="6" Padding="8,3" Margin="0,0,10,0">
+                                    <TextBlock Text="v0.8.1" FontWeight="Bold" FontSize="12" Foreground="White"/>
                                 </Border>
-                                <TextBlock Text="Native OPC DA 2.05a Classic COM Server &amp; Live Tag Workstation" FontSize="14" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                                <TextBlock Text="Modbus TCP Server, Solid Tab Architecture &amp; UI Enhancements" FontSize="14" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
                                 <Border Background="#ECFDF5" CornerRadius="6" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
                                     <TextBlock Text="CURRENT" FontWeight="Bold" FontSize="10.5" Foreground="#059669"/>
                                 </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="⚡ Built-in Modbus TCP Server (Port 5020 &amp; Zero-Based Addressing)" FontWeight="Bold" FontSize="12" Foreground="#D97706" Margin="0,0,0,3"/>
+                                <TextBlock Text="Direct, on-demand high-speed Modbus TCP Server supporting FC 01 (Read Coils), FC 02 (Read Discrete Inputs), FC 03 (Read Holding Registers), FC 04 (Read Input Registers), FC 05 (Write Single Coil), FC 06 (Write Single Register), FC 15 (Write Multiple Coils), and FC 16 (Write Multiple Registers). Mapped directly to Coil (Y &amp; M), Discrete Input (X), Holding Register (D), and Input Register (D) with zero-based addressing support." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="🚀 Lightweight 1-Second Dynamic Viewport Sync &amp; Event-Driven Write" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Optimized UI refreshing that scans virtual PLC memory only once every second for visible rows within the scroll viewport, preventing UI freezing or high CPU usage. Features zero-latency instant updates upon write operations from Modbus clients." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="⚙️ Customizable OPC UA Port &amp; Streamlined Network Header" FontWeight="Bold" FontSize="12" Foreground="#0D9488" Margin="0,0,0,3"/>
+                                <TextBlock Text="OPC UA Server port is now freely adjustable via up-down controls with automatic persistence. Cleaned redundant headers and streamlined the network endpoint layout for high readability." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="🎨 Solid Bounded Tab Containers &amp; Modern Sub-Tab Styling" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Upgraded main tab and sub-tab controls to modern bordered containers with clear visual boundaries, seamless tab header integration, and dedicated color themes for Modbus register groups." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Version 0.7.2 Card -->
+                <Border Background="#FFFFFF" CornerRadius="10" Padding="18" Margin="0,0,0,14" BorderBrush="#E2E8F0" BorderThickness="1">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Background="#64748B" CornerRadius="6" Padding="8,3" Margin="0,0,10,0">
+                                    <TextBlock Text="v0.7.2" FontWeight="Bold" FontSize="12" Foreground="White"/>
+                                </Border>
+                                <TextBlock Text="Integrated OPC UA Server, Public HMI Deployment &amp; Clean Installer" FontSize="14" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="🌐 Built-in OPC UA Server (opc.tcp, Port 48400 Auto-Start)" FontWeight="Bold" FontSize="12" Foreground="#0D9488" Margin="0,0,0,3"/>
+                                <TextBlock Text="Introduces a modern OPC UA Server (Endpoint: opc.tcp://localhost:48400/nettogxsim3) with Anonymous authentication by default, automatic port conflict resolution (+1 port increment on collision), and 100% tag mirroring from the OPC DA Classic workstation." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="📁 Example HMI in Public Directory (C:\Users\Public)" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Example HMI projects (Weintek EasyBuilder Pro &amp; Haiwell) are now installed to C:\Users\Public\NetToGXSim3\Example HMI to avoid Windows UAC permission issues when editing and compiling projects." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" CornerRadius="8" Padding="12,10" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="📦 Isolated Staging &amp; Single-File Installer Output" FontWeight="Bold" FontSize="12" Foreground="#0284C7" Margin="0,0,0,3"/>
+                                <TextBlock Text="Build pipeline now utilizes an isolated staging directory, ensuring the publish folder contains purely a clean, standalone setup installer without stray binary artifacts." FontSize="11.5" Foreground="#334155" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Version 0.7.1 Card -->
+                <Border Background="#FFFFFF" CornerRadius="10" Padding="18" Margin="0,0,0,14" BorderBrush="#E2E8F0" BorderThickness="1">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Background="#64748B" CornerRadius="6" Padding="8,3" Margin="0,0,10,0">
+                                    <TextBlock Text="v0.7.1" FontWeight="Bold" FontSize="12" Foreground="White"/>
+                                </Border>
+                                <TextBlock Text="Native OPC DA 2.05a Classic COM Server &amp; Live Tag Workstation" FontSize="14" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Grid>
 

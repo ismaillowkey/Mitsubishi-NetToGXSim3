@@ -1,6 +1,6 @@
 # NetToGXSim3
 
-**Mitsubishi GX Works 3 Simulator Network Protocol Bridge & OPC DA Server**  
+**Mitsubishi GX Works 3 Simulator Network Protocol Bridge, OPC DA, OPC UA & Modbus TCP Server**  
 *Developed by Ismail Lowkey*
 
 [![Platform](https://img.shields.io/badge/Platform-Windows%20x86%20%7C%20x64-007acc.svg)]()
@@ -8,7 +8,9 @@
 [![Target](https://img.shields.io/badge/Target-MELSOFT%20GX%20Simulator%203-red.svg)]()
 [![Protocol](https://img.shields.io/badge/Protocol-MC%20Protocol%20(3E%20%26%201E%20TCP%2FUDP)-green.svg)]()
 [![OPC DA](https://img.shields.io/badge/OPC%20DA-Classic%20COM%202.05a-blue.svg)]()
-[![Version](https://img.shields.io/badge/Version-v0.7.1-orange.svg)]()
+[![OPC UA](https://img.shields.io/badge/OPC%20UA-opc.tcp%2048400-teal.svg)]()
+[![Modbus TCP](https://img.shields.io/badge/Modbus%20TCP-Port%205020-amber.svg)]()
+[![Version](https://img.shields.io/badge/Version-v0.8.1-orange.svg)]()
 [![License](https://img.shields.io/badge/License-MIT-gray.svg)]()
 
 ---
@@ -34,9 +36,9 @@ Unduh installer setup versi terbaru pada halaman [GitHub Releases](https://githu
 
 ## 📖 Overview
 
-**NetToGXSim3** is a high-performance network protocol bridge and **OPC DA 2.05a Classic COM Server** designed to connect **Mitsubishi GX Simulator 3** (the built-in simulation engine for **GX Works 3**, supporting FX5U, FX5UJ, FX5S, iQ-R, L-series) to external Ethernet networks via **MELSEC Communication (MC) Protocol** (TCP & UDP) and OPC DA Classic.
+**NetToGXSim3** is a high-performance network protocol bridge, **OPC DA 2.05a Classic COM Server**, **OPC UA Server (`opc.tcp`)**, and **Modbus TCP Server** designed to connect **Mitsubishi GX Simulator 3** (the built-in simulation engine for **GX Works 3**, supporting FX5U, FX5UJ, FX5S, iQ-R, L-series) to external Ethernet networks, HMIs, and SCADA systems.
 
-Traditionally, GX Simulator 3 runs as isolated desktop processes (`FSim3Dlg.exe`, `FSimRun3.exe`, `Sim3Dlg.exe`, `RSimRun3.exe`), making it impossible for external HMIs, SCADA packages, or IoT gateways to communicate with the simulated PLC without physical hardware. **NetToGXSim3** eliminates this limitation by connecting directly to the running GX Simulator 3 runtime via Windows Shared Memory (Memory-Mapped Files / MMF) with sub-microsecond latency, hosting dual Ethernet TCP & UDP servers and a native OPC DA Classic Server without requiring any external drivers or third-party middleware.
+Traditionally, GX Simulator 3 runs as isolated desktop processes (`FSim3Dlg.exe`, `FSimRun3.exe`, `Sim3Dlg.exe`, `RSimRun3.exe`), making it impossible for external HMIs, SCADA packages, or IoT gateways to communicate with the simulated PLC without physical hardware. **NetToGXSim3** eliminates this limitation by connecting directly to the running GX Simulator 3 runtime via Windows Shared Memory (Memory-Mapped Files / MMF) with sub-microsecond latency, hosting dual Ethernet MC Protocol servers (TCP & UDP), an OPC UA Server, an OPC DA Classic Server, and a Modbus TCP Server without requiring any external drivers or third-party middleware.
 
 > [!TIP]
 > **Zero-Configuration (Direct Simulator Driver Engine)**: NetToGXSim3 communicates directly with GX Simulator 3 shared memory. No manual station setup, no external communication drivers, and zero complex middleware required!
@@ -61,20 +63,23 @@ Traditionally, GX Simulator 3 runs as isolated desktop processes (`FSim3Dlg.exe`
 │  ┌─────────────────────────┐     ┌────────────────────────┐ │
 │  │   MC Server 1 (TCP/UDP) │     │   MC Server 2 (TCP/UDP)│ │
 │  │   (Default: Port 5001)  │     │   (Default: Port 5002) │ │
-│  └────────────┬────────────┘     └───────────┬────────────┘ │
-│               │ Pure On-Demand Passthrough   │              │
-│  ┌────────────┴──────────────────────────────┴────────────┐ │
-│  │  Native OPC DA 2.05a Classic COM Server (Auto-Started) │ │
-│  │  ProgID: NetToGXSim3.OPCServer.DA                      │ │
-│  └────────────────────────────┬───────────────────────────┘ │
-└───────────────────────────────┼─────────────────────────────┘
-                                │ Ethernet TCP/UDP (MC Protocol) & COM
-    ┌───────────────────────────┼───────────────────────────┐
-    │                           │                           │
-┌───▼─────────────┐   ┌─────────▼───────────┐     ┌─────────▼───────────┐
-│  Weintek HMI    │   │  Python / Node-RED  │     │  OPC DA SCADA /     │
-│ (EasyBuilder)   │   │  pymcprotocol / IoT │     │  Kepware / InTouch  │
-└─────────────────┘   └─────────────────────┘     └─────────────────────┘
+│  └─────────────────────────┘     └────────────────────────┘ │
+│  ┌─────────────────────────┐     ┌────────────────────────┐ │
+│  │  OPC DA 2.05a Classic   │     │  OPC UA Server         │ │
+│  │  (COM: NetToGXSim3.DA)  │     │  (opc.tcp://:48400)    │ │
+│  └─────────────────────────┘     └────────────────────────┘ │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  Modbus TCP Server (Port 5020, FC 01/02/03/04/05/06/15)│ │
+│  └────────────────────────────────────────────────────────┘ │
+│               Pure On-Demand Direct Passthrough             │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ Ethernet & Local COM
+    ┌──────────────────────────┼───────────────────────────┐
+    │                          │                           │
+┌───▼─────────────┐  ┌─────────▼───────────┐     ┌─────────▼───────────┐
+│  Weintek HMI /  │  │  Python / Node-RED  │     │  SCADA / OPC Client │
+│  Modbus Clients │  │  pymc / pymodbus    │     │  UaExpert / Kepware │
+└─────────────────┘  └─────────────────────┘     └─────────────────────┘
 ```
 
 ---
@@ -151,6 +156,28 @@ NetToGXSim3 operates with **Zero CPU Overhead**:
   - **Persistence & Portability**: Automatic real-time persistence in `opc_tags.json`, plus CSV Export/Import.
   - **Test Controls**: In-app test value write and bit toggle directly to virtual PLC registers.
   - **Broad Compatibility**: Direct integration with OPC Expert, Kepware KEPServerEX, Matrikon, Wonderware InTouch, Siemens WinCC, etc.
+
+- 🌐 **Built-in OPC UA Server (`opc.tcp`)**:
+  - **Endpoint**: `opc.tcp://localhost:48400/nettogxsim3` (and network hostname / IP).
+  - **Port Configuration**: Fully customizable port with up/down spinner and automatic collision detection.
+  - **Zero-Friction Authentication**: Anonymous access enabled by default.
+  - **Automatic Tag Mirroring**: Seamlessly reflects 100% of tags created in the centralized tag workstation into the OPC UA namespace (`ns=2;s=NetToGXSim3.<Tag>`).
+  - **Broad Client Compatibility**: Direct connectivity with UaExpert, Ignition SCADA, Pro-face, Node-RED, and cloud IoT gateways.
+
+- ⚡ **Built-in Modbus TCP Server (Port 5020)**:
+  - **High-Speed On-Demand Passthrough**: Serves real-time Modbus TCP requests without background polling overhead.
+  - **Full Function Code Support**:
+    - `FC 01`: Read Coils (Coil `0..1999` mapped to `Y0..Y17` Octal, Coil `2000+` mapped to `M0..M7679`).
+    - `FC 02`: Read Discrete Inputs (`10001+` mapped to `X0..X17` Octal inputs).
+    - `FC 03`: Read Holding Registers (`40001+` mapped to `D0..D7999`).
+    - `FC 04`: Read Input Registers (`30001+` mapped to `D0..D7999`).
+    - `FC 05`: Write Single Coil (writes to `Y` or `M` with triple-write latch sync).
+    - `FC 06`: Write Single Holding Register (writes to `D`).
+    - `FC 15`: Write Multiple Coils (batch write to `Y` or `M`).
+    - `FC 16`: Write Multiple Registers (batch write to `D`).
+  - **Zero-Based Addressing Toggle**: Switch between standard Modbus 1-based offset and 0-based address indexing on the fly.
+  - **Lightweight 1-Second Viewport Sync & Event-Driven Write**: UI monitoring polls virtual PLC memory only once per second for visible DataGrid rows, accompanied by instant zero-latency feedback on write events.
+  - **Real-Time Request & Client Diagnostics**: Atomic thread-safe tracking of total requests processed and active TCP clients.
 
 - ⚡ **Dual MC Protocol Servers (TCP & UDP)**:
   - **Server 1 (TCP Binary)**: Default port `5001`. Automatically starts on launch.
@@ -246,6 +273,18 @@ mc.batchwrite_wordunits(headdevice="D0", values=[1234])
 mc.batchwrite_bitunits(headdevice="M0", values=[1])
 ```
 
+#### Example D: OPC UA Client (UaExpert / Ignition)
+1. In UaExpert, click **Server** → **Add** and enter endpoint: `opc.tcp://127.0.0.1:48400/nettogxsim3`.
+2. Connect using Security Policy: **None** (Anonymous).
+3. Browse the node tree under `Root` → `Objects` → `NetToGXSim3` to read and write live PLC tags.
+
+#### Example E: Modbus TCP Client (Modbus Poll / SCADA)
+1. In Modbus Poll (or any Modbus client):
+   - **Connection**: `Modbus TCP/IP`, IP Address: `127.0.0.1`, Port: `5020`.
+   - **Read Coils (FC 01)**: Address `0` (or `1`) to read `Y0`, Address `2000` to read `M0`.
+   - **Read Holding Registers (FC 03)**: Address `0` (or `40001`) to read `D0`.
+   - **Write Single Coil (FC 05)**: Address `2000` to set `M0` ON (`1`) or OFF (`0`).
+
 ---
 
 ## 🛠 Building from Source
@@ -271,7 +310,7 @@ dotnet publish src/NetToGXSim3.Wpf/NetToGXSim3.Wpf.csproj -c Release -o publish
 
 - **Developer**: Ismail Lowkey
 - **Repository**: [ismaillowkey/Mitsubishi-NetToGXSim3](https://github.com/ismaillowkey/Mitsubishi-NetToGXSim3)
-- **Version**: v0.7.1
+- **Version**: v0.8.1
 
 ---
 

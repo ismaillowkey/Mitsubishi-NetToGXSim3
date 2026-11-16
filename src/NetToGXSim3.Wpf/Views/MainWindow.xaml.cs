@@ -20,7 +20,23 @@ namespace NetToGXSim3.Wpf.Views
         private readonly McProtocolServer _mcServer1;
         private readonly McProtocolServer _mcServer2;
         private readonly OpcDaServerEngine _opcDaServer;
+        private readonly OpcUaServerEngine _opcUaServer;
+        private readonly ModbusTcpServer _modbusServer;
+        private readonly ModbusConfig _modbusConfig;
+        private bool _isInitializingModbus = true;
+
+        public ObservableCollection<ModbusItemModel> ModbusCoilItems { get; } = new ObservableCollection<ModbusItemModel>();
+        public ObservableCollection<ModbusItemModel> ModbusDiscreteItems { get; } = new ObservableCollection<ModbusItemModel>();
+        public ObservableCollection<ModbusItemModel> ModbusHoldingItems { get; } = new ObservableCollection<ModbusItemModel>();
+        public ObservableCollection<ModbusItemModel> ModbusInputItems { get; } = new ObservableCollection<ModbusItemModel>();
+
+        private ScrollViewer? _svModbusCoil;
+        private ScrollViewer? _svModbusDiscrete;
+        private ScrollViewer? _svModbusHolding;
+        private ScrollViewer? _svModbusInput;
+
         private readonly DispatcherTimer _pollTimer;
+        private readonly DispatcherTimer _modbusUiTimer;
 
         private static readonly string[] OctalDeviceIndices = new string[]
         {
@@ -40,6 +56,7 @@ namespace NetToGXSim3.Wpf.Views
 
         private bool _isPollingBusy = false;
         private DateTime _lastConnectAttempt = DateTime.MinValue;
+        private DateTime _lastModbusTableUpdateTime = DateTime.MinValue;
 
         public MainWindow()
         {
@@ -87,6 +104,52 @@ namespace NetToGXSim3.Wpf.Views
             _opcDaServer.StartServer();
             UpdateOpcServerUI();
 
+            // Initialize OPC UA Server (Auto-start on port 48400, anonymous allowed, mirrors OPC DA tags)
+            _opcUaServer = new OpcUaServerEngine(_opcDaServer);
+            _opcUaServer.OnLog += (msg) => Dispatcher.InvokeAsync(() => Log(msg));
+            _opcUaServer.OnStateChanged += () => Dispatcher.InvokeAsync(UpdateOpcUaServerUI);
+            DgOpcUaTags.ItemsSource = _opcDaServer.Tags;
+            UpdateOpcUaServerUI();
+
+            Task.Run(async () =>
+            {
+                await _opcUaServer.StartServerAsync(48400);
+            });
+
+            // Initialize Modbus TCP Server (Default port 5020, auto-start, auto-save modbus_config.json)
+            _modbusConfig = ModbusConfig.Load();
+            _modbusServer = new ModbusTcpServer(_simEngine, _modbusConfig);
+            _modbusServer.LogMessage += (msg) => Dispatcher.InvokeAsync(() => Log(msg));
+            _modbusServer.StateChanged += (running) => Dispatcher.InvokeAsync(UpdateModbusServerUI);
+            _modbusServer.PortCollisionDetected += (oldPort, newPort) => Dispatcher.InvokeAsync(() =>
+            {
+                TxtModbusPort.Text = newPort.ToString();
+                TxtModbusPortHeader.Text = $"(Port {newPort})";
+            });
+            _modbusServer.DeviceWritten += (device, val) => Dispatcher.InvokeAsync(() =>
+            {
+                if (_modbusServer != null)
+                {
+                    TxtModbusRequests.Text = _modbusServer.RequestsProcessed.ToString("N0");
+                    TxtModbusClients.Text = _modbusServer.ConnectedClientsCount.ToString();
+                }
+                OnModbusDeviceWritten(device, val);
+            });
+
+            InitializeModbusTables();
+            _isInitializingModbus = false;
+
+            if (!System.IO.File.Exists(_modbusConfig.StoragePath))
+            {
+                _modbusConfig.Save();
+            }
+
+            if (_modbusConfig.AutoStart)
+            {
+                _modbusServer.Start();
+            }
+            UpdateModbusServerUI();
+
             // Auto-register OPC DA Server in Windows Registry on app startup so SCADA / OPC clients immediately detect it
             try
             {
@@ -123,6 +186,28 @@ namespace NetToGXSim3.Wpf.Views
             };
             _pollTimer.Tick += PollTimer_Tick;
             _pollTimer.Start();
+
+            // Dedicated 1-second Modbus UI timer (lightweight, isolated from PLC hardware polling)
+            _modbusUiTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1)
+            };
+            _modbusUiTimer.Tick += (s, e) =>
+            {
+                if (_modbusServer == null)
+                {
+                    return;
+                }
+
+                TxtModbusRequests.Text = _modbusServer.RequestsProcessed.ToString("N0");
+                TxtModbusClients.Text = _modbusServer.ConnectedClientsCount.ToString();
+
+                if (TabModbusTcpServer.IsSelected && _simEngine.IsConnected)
+                {
+                    UpdateModbusVisibleLiveValues();
+                }
+            };
+            _modbusUiTimer.Start();
 
             // Auto-check for updates in background on startup
             Task.Run(async () =>
@@ -751,43 +836,86 @@ namespace NetToGXSim3.Wpf.Views
         {
             try
             {
-                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-                string targetDir = System.IO.Path.Combine(baseDir, "Example Program HMI");
-
-                // Jika belum ditemukan di base directory, cari ke atas (misal saat running via bin/Release)
-                if (!System.IO.Directory.Exists(targetDir))
+                // Ambil path folder Public Windows (default fallback: C:\Users\Public)
+                string publicFolder = Environment.GetEnvironmentVariable("PUBLIC");
+                if (string.IsNullOrEmpty(publicFolder))
                 {
-                    string current = baseDir;
-                    for (int i = 0; i < 5; i++)
-                    {
-                        string parent = System.IO.Path.GetFullPath(System.IO.Path.Combine(current, ".."));
-                        if (parent == current)
-                        {
-                            break;
-                        }
-                        current = parent;
+                    publicFolder = @"C:\Users\Public";
+                }
 
-                        string candidate = System.IO.Path.Combine(current, "Example Program HMI");
-                        if (System.IO.Directory.Exists(candidate))
+                // Path target utama yang dituju di folder Public
+                string publicTargetDir = System.IO.Path.Combine(publicFolder, "NetToGXSim3", "Example HMI");
+
+                // Cari folder sumber example program di direktori aplikasi atau folder project
+                string sourceDir = FindSourceExampleDirectory();
+
+                // Jika folder Public belum ada, buat foldernya secara otomatis
+                if (!System.IO.Directory.Exists(publicTargetDir))
+                {
+                    try
+                    {
+                        System.IO.Directory.CreateDirectory(publicTargetDir);
+                    }
+                    catch
+                    {
+                        // Jika gagal membuat direktori public karena izin tertentu, abaikan di sini
+                    }
+                }
+
+                // Jika folder Public berhasil dibuat/ada dan isinya masih kosong, salin dari folder sumber
+                if (System.IO.Directory.Exists(publicTargetDir))
+                {
+                    bool isTargetEmpty = false;
+                    try
+                    {
+                        string[] entries = System.IO.Directory.GetFileSystemEntries(publicTargetDir);
+                        if (entries.Length == 0)
                         {
-                            targetDir = candidate;
-                            break;
+                            isTargetEmpty = true;
+                        }
+                    }
+                    catch
+                    {
+                        isTargetEmpty = false;
+                    }
+
+                    if (isTargetEmpty && !string.IsNullOrEmpty(sourceDir) && System.IO.Directory.Exists(sourceDir))
+                    {
+                        try
+                        {
+                            CopyDirectoryRecursive(sourceDir, publicTargetDir);
+                        }
+                        catch
+                        {
+                            // Abaikan error penyalinan, buka folder yang ada
                         }
                     }
                 }
 
-                if (System.IO.Directory.Exists(targetDir))
+                // Tentukan folder yang akan dibuka oleh Explorer
+                string targetToOpen = null;
+                if (System.IO.Directory.Exists(publicTargetDir))
+                {
+                    targetToOpen = publicTargetDir;
+                }
+                else if (!string.IsNullOrEmpty(sourceDir) && System.IO.Directory.Exists(sourceDir))
+                {
+                    // Fallback ke folder sumber jika folder Public sama sekali tidak dapat diakses
+                    targetToOpen = sourceDir;
+                }
+
+                if (!string.IsNullOrEmpty(targetToOpen) && System.IO.Directory.Exists(targetToOpen))
                 {
                     System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                     {
-                        FileName = targetDir,
+                        FileName = targetToOpen,
                         UseShellExecute = true
                     });
                 }
                 else
                 {
                     MessageBox.Show(
-                        $"Example Program HMI folder was not found at:\n{targetDir}",
+                        $"Example HMI folder was not found at:\n{publicTargetDir}",
                         "Folder Not Found",
                         MessageBoxButton.OK,
                         MessageBoxImage.Warning);
@@ -796,10 +924,76 @@ namespace NetToGXSim3.Wpf.Views
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    $"Failed to open Example Program HMI folder:\n{ex.Message}",
+                    $"Failed to open Example HMI folder:\n{ex.Message}",
                     "Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
+            }
+        }
+
+        private static string FindSourceExampleDirectory()
+        {
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+
+            // 1. Cek langsung di dalam base directory (mode portable)
+            string candidateApp1 = System.IO.Path.Combine(baseDir, "Example HMI");
+            if (System.IO.Directory.Exists(candidateApp1))
+            {
+                return candidateApp1;
+            }
+
+            string candidateApp2 = System.IO.Path.Combine(baseDir, "Example Program HMI");
+            if (System.IO.Directory.Exists(candidateApp2))
+            {
+                return candidateApp2;
+            }
+
+            // 2. Cek di parent directories (saat running dev / dotnet run)
+            string current = baseDir;
+            for (int i = 0; i < 6; i++)
+            {
+                string parent = System.IO.Path.GetFullPath(System.IO.Path.Combine(current, ".."));
+                if (parent == current)
+                {
+                    break;
+                }
+                current = parent;
+
+                string candidateParent1 = System.IO.Path.Combine(current, "Example HMI");
+                if (System.IO.Directory.Exists(candidateParent1))
+                {
+                    return candidateParent1;
+                }
+
+                string candidateParent2 = System.IO.Path.Combine(current, "Example Program HMI");
+                if (System.IO.Directory.Exists(candidateParent2))
+                {
+                    return candidateParent2;
+                }
+            }
+
+            return null;
+        }
+
+        private static void CopyDirectoryRecursive(string sourcePath, string targetPath)
+        {
+            if (!System.IO.Directory.Exists(targetPath))
+            {
+                System.IO.Directory.CreateDirectory(targetPath);
+            }
+
+            foreach (string file in System.IO.Directory.GetFiles(sourcePath))
+            {
+                string fileName = System.IO.Path.GetFileName(file);
+                string destFile = System.IO.Path.Combine(targetPath, fileName);
+                System.IO.File.Copy(file, destFile, true);
+            }
+
+            foreach (string dir in System.IO.Directory.GetDirectories(sourcePath))
+            {
+                string dirName = System.IO.Path.GetFileName(dir);
+                string destDir = System.IO.Path.Combine(targetPath, dirName);
+                CopyDirectoryRecursive(dir, destDir);
             }
         }
 
@@ -973,6 +1167,10 @@ namespace NetToGXSim3.Wpf.Views
 
             TxtOpcClientsCount.Text = _opcDaServer.ClientCount.ToString();
             TxtOpcTotalTags.Text = _opcDaServer.Tags.Count.ToString();
+            if (TxtOpcUaTotalTags != null)
+            {
+                TxtOpcUaTotalTags.Text = _opcDaServer.Tags.Count.ToString();
+            }
         }
 
         private void BtnStartOpcServer_Click(object sender, RoutedEventArgs e)
@@ -1275,12 +1473,766 @@ namespace NetToGXSim3.Wpf.Views
 
         #endregion
 
+        #region OPC UA Server Handlers
+
+        private void UpdateOpcUaServerUI()
+        {
+            if (_opcUaServer == null)
+            {
+                return;
+            }
+
+            if (_opcUaServer.IsRunning)
+            {
+                TxtOpcUaServerStatus.Text = "OPC UA SERVER: RUNNING (AUTO-STARTED)";
+                TxtOpcUaServerStatus.Foreground = new SolidColorBrush(Color.FromRgb(4, 120, 87));
+                OpcUaStatusLed.Fill = new SolidColorBrush(Color.FromRgb(16, 185, 129));
+                BtnStartOpcUaServer.Visibility = Visibility.Collapsed;
+                BtnStopOpcUaServer.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                TxtOpcUaServerStatus.Text = "OPC UA SERVER: STOPPED";
+                TxtOpcUaServerStatus.Foreground = new SolidColorBrush(Color.FromRgb(220, 38, 38));
+                OpcUaStatusLed.Fill = new SolidColorBrush(Color.FromRgb(239, 68, 68));
+                BtnStartOpcUaServer.Visibility = Visibility.Visible;
+                BtnStopOpcUaServer.Visibility = Visibility.Collapsed;
+            }
+
+            TxtOpcUaEndpoint.Text = _opcUaServer.ActiveEndpoint;
+            TxtOpcUaNetworkEndpoint.Text = _opcUaServer.NetworkEndpoint;
+            if (!TxtOpcUaPort.IsFocused)
+            {
+                TxtOpcUaPort.Text = _opcUaServer.ActivePort.ToString();
+            }
+            TxtOpcUaSessionsCount.Text = _opcUaServer.SessionCount.ToString();
+            TxtOpcUaTotalTags.Text = _opcDaServer.Tags.Count.ToString();
+
+            if (!string.IsNullOrEmpty(_opcUaServer.PortCollisionNotice))
+            {
+                BorderOpcUaPortNotice.Visibility = Visibility.Visible;
+                TxtOpcUaPortNotice.Text = _opcUaServer.PortCollisionNotice;
+            }
+            else
+            {
+                BorderOpcUaPortNotice.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private async void BtnStartOpcUaServer_Click(object sender, RoutedEventArgs e)
+        {
+            int port = _opcUaServer.ActivePort;
+            if (int.TryParse(TxtOpcUaPort.Text.Trim(), out int customPort))
+            {
+                if (customPort >= 1024 && customPort <= 65535)
+                {
+                    port = customPort;
+                }
+            }
+            await _opcUaServer.StartServerAsync(port);
+            UpdateOpcUaServerUI();
+        }
+
+        private void BtnOpcUaPortUp_Click(object sender, RoutedEventArgs e)
+        {
+            if (int.TryParse(TxtOpcUaPort.Text.Trim(), out int port))
+            {
+                if (port < 65535)
+                {
+                    port++;
+                    TxtOpcUaPort.Text = port.ToString();
+                    if (_opcUaServer.IsRunning)
+                    {
+                        Task.Run(async () =>
+                        {
+                            await _opcUaServer.RestartServerAsync(port);
+                            Dispatcher.Invoke(UpdateOpcUaServerUI);
+                        });
+                    }
+                }
+            }
+        }
+
+        private void BtnOpcUaPortDown_Click(object sender, RoutedEventArgs e)
+        {
+            if (int.TryParse(TxtOpcUaPort.Text.Trim(), out int port))
+            {
+                if (port > 1024)
+                {
+                    port--;
+                    TxtOpcUaPort.Text = port.ToString();
+                    if (_opcUaServer.IsRunning)
+                    {
+                        Task.Run(async () =>
+                        {
+                            await _opcUaServer.RestartServerAsync(port);
+                            Dispatcher.Invoke(UpdateOpcUaServerUI);
+                        });
+                    }
+                }
+            }
+        }
+
+        private void BtnStopOpcUaServer_Click(object sender, RoutedEventArgs e)
+        {
+            _opcUaServer.StopServer();
+            UpdateOpcUaServerUI();
+        }
+
+        private void BtnCopyUaEndpoint_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Clipboard.SetText(_opcUaServer.ActiveEndpoint);
+                MessageBox.Show($"OPC UA Endpoint URL copied to clipboard:\n{_opcUaServer.ActiveEndpoint}",
+                                "Endpoint Copied", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to copy endpoint:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void BtnSwitchToOpcDaTab_Click(object sender, RoutedEventArgs e)
+        {
+            TabOpcDaServer.IsSelected = true;
+        }
+
+        #endregion
+
+        #region Modbus TCP Server Management & Data Mapping
+
+        /// <summary>
+        /// Inisialisasi awal seluruh tabel pemetaan Modbus TCP (Coil, Discrete, Holding, Input).
+        /// </summary>
+        private void InitializeModbusTables()
+        {
+            TxtModbusPort.Text = _modbusConfig.Port.ToString();
+            TxtModbusPortHeader.Text = $"(Port {_modbusConfig.Port})";
+
+            if (_modbusConfig.IsZeroBased)
+            {
+                ChkZeroBasedAddressing.IsChecked = true;
+                BadgeZeroBased.Text = "Zero-Based Addressing: ON";
+            }
+            else
+            {
+                ChkZeroBasedAddressing.IsChecked = false;
+                BadgeZeroBased.Text = "Zero-Based Addressing: OFF (1-Based)";
+            }
+
+            // 1. Inisialisasi Coil (0x): Y0 s/d Y1999 (2000 titik) + M0 s/d M7679 (7680 titik) = 9680 titik
+            ModbusCoilItems.Clear();
+            for (int i = 0; i < 2000; i++)
+            {
+                int modbusAddr = i;
+                if (!_modbusConfig.IsZeroBased)
+                {
+                    modbusAddr = i + 1;
+                }
+
+                string octalStr = Convert.ToString(i, 8);
+                string plcDevice = "Y" + octalStr;
+                string description = string.Empty;
+                if (_modbusConfig.Descriptions.TryGetValue(plcDevice, out string? d))
+                {
+                    description = d;
+                }
+
+                ModbusCoilItems.Add(new ModbusItemModel
+                {
+                    No = i + 1,
+                    ModbusAddress = modbusAddr,
+                    PlcDevice = plcDevice,
+                    Description = description,
+                    ValueText = "0 (OFF)"
+                });
+            }
+
+            for (int i = 0; i < 7680; i++)
+            {
+                int modbusAddr = 2000 + i;
+                if (!_modbusConfig.IsZeroBased)
+                {
+                    modbusAddr = 2000 + i + 1;
+                }
+
+                string plcDevice = "M" + i;
+                string description = string.Empty;
+                if (_modbusConfig.Descriptions.TryGetValue(plcDevice, out string? d))
+                {
+                    description = d;
+                }
+
+                ModbusCoilItems.Add(new ModbusItemModel
+                {
+                    No = 2000 + i + 1,
+                    ModbusAddress = modbusAddr,
+                    PlcDevice = plcDevice,
+                    Description = description,
+                    ValueText = "0 (OFF)"
+                });
+            }
+
+            // 2. Inisialisasi Discrete Input (1x): X0 s/d X2999 (3000 titik, READ ONLY)
+            ModbusDiscreteItems.Clear();
+            for (int i = 0; i < 3000; i++)
+            {
+                int modbusAddr = i;
+                if (!_modbusConfig.IsZeroBased)
+                {
+                    modbusAddr = i + 1;
+                }
+
+                string octalStr = Convert.ToString(i, 8);
+                string plcDevice = "X" + octalStr;
+                string description = string.Empty;
+                if (_modbusConfig.Descriptions.TryGetValue(plcDevice, out string? d))
+                {
+                    description = d;
+                }
+
+                ModbusDiscreteItems.Add(new ModbusItemModel
+                {
+                    No = i + 1,
+                    ModbusAddress = modbusAddr,
+                    PlcDevice = plcDevice,
+                    Description = description,
+                    ValueText = "0 (OFF)"
+                });
+            }
+
+            // 3. Inisialisasi Holding Register (4x): D0 s/d D5999 (6000 register, READ/WRITE)
+            ModbusHoldingItems.Clear();
+            for (int i = 0; i < 6000; i++)
+            {
+                int modbusAddr = i;
+                if (!_modbusConfig.IsZeroBased)
+                {
+                    modbusAddr = i + 1;
+                }
+
+                string plcDevice = "D" + i;
+                string description = string.Empty;
+                if (_modbusConfig.Descriptions.TryGetValue("Holding_" + plcDevice, out string? d))
+                {
+                    description = d;
+                }
+                else if (_modbusConfig.Descriptions.TryGetValue(plcDevice, out string? d2))
+                {
+                    description = d2;
+                }
+
+                ModbusHoldingItems.Add(new ModbusItemModel
+                {
+                    No = i + 1,
+                    ModbusAddress = modbusAddr,
+                    PlcDevice = plcDevice,
+                    Description = description,
+                    ValueText = "0"
+                });
+            }
+
+            // 4. Inisialisasi Input Register (3x): D0 s/d D5999 (6000 register, READ ONLY)
+            ModbusInputItems.Clear();
+            for (int i = 0; i < 6000; i++)
+            {
+                int modbusAddr = i;
+                if (!_modbusConfig.IsZeroBased)
+                {
+                    modbusAddr = i + 1;
+                }
+
+                string plcDevice = "D" + i;
+                string description = string.Empty;
+                if (_modbusConfig.Descriptions.TryGetValue("Input_" + plcDevice, out string? d))
+                {
+                    description = d;
+                }
+                else if (_modbusConfig.Descriptions.TryGetValue(plcDevice, out string? d2))
+                {
+                    description = d2;
+                }
+
+                ModbusInputItems.Add(new ModbusItemModel
+                {
+                    No = i + 1,
+                    ModbusAddress = modbusAddr,
+                    PlcDevice = plcDevice,
+                    Description = description,
+                    ValueText = "0"
+                });
+            }
+
+            // Hubungkan koleksi data ke DataGrid masing-masing
+            DgModbusCoil.ItemsSource = ModbusCoilItems;
+            DgModbusDiscrete.ItemsSource = ModbusDiscreteItems;
+            DgModbusHolding.ItemsSource = ModbusHoldingItems;
+            DgModbusInput.ItemsSource = ModbusInputItems;
+
+            // Pasang event LoadingRow untuk auto-refresh live value saat baris muncul di layar
+            DgModbusCoil.LoadingRow += DgModbus_LoadingRow;
+            DgModbusDiscrete.LoadingRow += DgModbus_LoadingRow;
+            DgModbusHolding.LoadingRow += DgModbus_LoadingRow;
+            DgModbusInput.LoadingRow += DgModbus_LoadingRow;
+        }
+
+        /// <summary>
+        /// Membaca nilai aktual dari GX Simulator 3 secara instan saat baris dimuat di layar UI.
+        /// </summary>
+        private void DgModbus_LoadingRow(object? sender, DataGridRowEventArgs e)
+        {
+            if (e.Row.Item is ModbusItemModel item)
+            {
+                RefreshItemLiveValue(item);
+            }
+        }
+
+        /// <summary>
+        /// Memperbarui nilai live item individual dari memori GX Simulator 3.
+        /// </summary>
+        private void RefreshItemLiveValue(ModbusItemModel item)
+        {
+            if (!_simEngine.IsConnected || string.IsNullOrEmpty(item.PlcDevice))
+            {
+                return;
+            }
+
+            try
+            {
+                int res = _simEngine.ReadDevice(item.PlcDevice, out int val);
+                if (res == 0)
+                {
+                    if (item.PlcDevice.StartsWith("X") || item.PlcDevice.StartsWith("Y") || item.PlcDevice.StartsWith("M"))
+                    {
+                        if (val != 0)
+                        {
+                            item.ValueText = "1 (ON)";
+                        }
+                        else
+                        {
+                            item.ValueText = "0 (OFF)";
+                        }
+                    }
+                    else
+                    {
+                        item.ValueText = ((short)val).ToString();
+                    }
+                }
+            }
+            catch
+            {
+                // Abaikan kesalahan pembacaan jika simulator sedang transisi offline
+            }
+        }
+
+        /// <summary>
+        /// Handler pembaruan instan saat ada penulisan device dari client Modbus TCP (Modbus Poll / SCADA).
+        /// Memperbarui nilai pada baris tabel secara seketika (zero-latency feedback).
+        /// </summary>
+        private void OnModbusDeviceWritten(string device, int val)
+        {
+            if (string.IsNullOrEmpty(device))
+            {
+                return;
+            }
+
+            if (device.StartsWith("M"))
+            {
+                // Relay M berada pada index coil mulai dari 2000
+                if (int.TryParse(device.Substring(1), out int mIdx))
+                {
+                    int coilIdx = 2000 + mIdx;
+                    if (coilIdx >= 0 && coilIdx < ModbusCoilItems.Count)
+                    {
+                        if (val != 0)
+                        {
+                            ModbusCoilItems[coilIdx].ValueText = "1 (ON)";
+                        }
+                        else
+                        {
+                            ModbusCoilItems[coilIdx].ValueText = "0 (OFF)";
+                        }
+                    }
+                }
+            }
+            else if (device.StartsWith("Y"))
+            {
+                // Relay Y menggunakan penomoran oktal pada PLC Mitsubishi
+                try
+                {
+                    int yDec = Convert.ToInt32(device.Substring(1), 8);
+                    if (yDec >= 0 && yDec < 2000 && yDec < ModbusCoilItems.Count)
+                    {
+                        if (val != 0)
+                        {
+                            ModbusCoilItems[yDec].ValueText = "1 (ON)";
+                        }
+                        else
+                        {
+                            ModbusCoilItems[yDec].ValueText = "0 (OFF)";
+                        }
+                    }
+                }
+                catch
+                {
+                    // Alamat oktal tidak valid
+                }
+            }
+            else if (device.StartsWith("D"))
+            {
+                if (int.TryParse(device.Substring(1), out int dIdx))
+                {
+                    string textVal = ((short)val).ToString();
+                    if (dIdx >= 0 && dIdx < ModbusHoldingItems.Count)
+                    {
+                        ModbusHoldingItems[dIdx].ValueText = textVal;
+                    }
+                    if (dIdx >= 0 && dIdx < ModbusInputItems.Count)
+                    {
+                        ModbusInputItems[dIdx].ValueText = textVal;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Mencari ScrollViewer internal dari kontrol DataGrid untuk mendeteksi baris mana yang sedang terlihat di layar.
+        /// </summary>
+        private static ScrollViewer? GetScrollViewer(DependencyObject? depObj)
+        {
+            if (depObj == null)
+            {
+                return null;
+            }
+
+            if (depObj is ScrollViewer sv)
+            {
+                return sv;
+            }
+
+            int childrenCount = VisualTreeHelper.GetChildrenCount(depObj);
+            for (int i = 0; i < childrenCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(depObj, i);
+                var result = GetScrollViewer(child);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Memperbarui nilai baris yang sedang aktif dibuka pengguna di layar (misal M0 s/d M20).
+        /// Dijalankan setiap 1 detik sekali sehingga sangat ringan dan tidak membebani proses.
+        /// </summary>
+        private void RefreshVisibleItems(DataGrid dg, ObservableCollection<ModbusItemModel> items, ref ScrollViewer? cachedSv)
+        {
+            if (items == null || items.Count == 0)
+            {
+                return;
+            }
+
+            if (cachedSv == null)
+            {
+                cachedSv = GetScrollViewer(dg);
+            }
+
+            int startIndex = 0;
+            int count = Math.Min(25, items.Count);
+
+            if (cachedSv != null)
+            {
+                // Pada DataGrid dengan ScrollViewer.CanContentScroll="True", VerticalOffset adalah indeks item baris teratas
+                int offset = (int)cachedSv.VerticalOffset;
+                int viewport = (int)Math.Ceiling(cachedSv.ViewportHeight);
+                if (viewport <= 0)
+                {
+                    viewport = 25;
+                }
+
+                // Cukup perbarui baris yang sedang tampak di layar (misal 20-25 baris aktif)
+                startIndex = Math.Max(0, offset);
+                int endIndex = Math.Min(items.Count, offset + viewport);
+                count = endIndex - startIndex;
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                int idx = startIndex + i;
+                if (idx >= 0 && idx < items.Count)
+                {
+                    RefreshItemLiveValue(items[idx]);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sinkronisasi berkala untuk nilai live baris yang sedang aktif ditampilkan di sub-tab Modbus.
+        /// Mendeteksi posisi scroll pengguna sehingga baris berapapun (termasuk M0 di baris 2000) selalu terbarui.
+        /// </summary>
+        private void UpdateModbusVisibleLiveValues()
+        {
+            if (!TabModbusTcpServer.IsSelected)
+            {
+                return;
+            }
+
+            if (_modbusServer != null)
+            {
+                TxtModbusRequests.Text = _modbusServer.RequestsProcessed.ToString("N0");
+                TxtModbusClients.Text = _modbusServer.ConnectedClientsCount.ToString();
+            }
+
+            if (!_simEngine.IsConnected)
+            {
+                return;
+            }
+
+            int subIndex = TabControlModbusSub.SelectedIndex;
+
+            if (subIndex == 0)
+            {
+                // Sub-tab Coil (Y & M)
+                RefreshVisibleItems(DgModbusCoil, ModbusCoilItems, ref _svModbusCoil);
+            }
+            else if (subIndex == 1)
+            {
+                // Sub-tab Discrete Input (X)
+                RefreshVisibleItems(DgModbusDiscrete, ModbusDiscreteItems, ref _svModbusDiscrete);
+            }
+            else if (subIndex == 2)
+            {
+                // Sub-tab Holding Register (D)
+                RefreshVisibleItems(DgModbusHolding, ModbusHoldingItems, ref _svModbusHolding);
+            }
+            else if (subIndex == 3)
+            {
+                // Sub-tab Input Register (D)
+                RefreshVisibleItems(DgModbusInput, ModbusInputItems, ref _svModbusInput);
+            }
+        }
+
+        /// <summary>
+        /// Handler perubahan pengaturan Zero-Based Addressing.
+        /// Menyimpan konfigurasi dan memperbarui kolom alamat Modbus di seluruh 4 tabel.
+        /// </summary>
+        private void ChkZeroBasedAddressing_Changed(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializingModbus)
+            {
+                return;
+            }
+
+            bool isZeroBased = false;
+            if (ChkZeroBasedAddressing.IsChecked.HasValue && ChkZeroBasedAddressing.IsChecked.Value)
+            {
+                isZeroBased = true;
+            }
+
+            _modbusConfig.IsZeroBased = isZeroBased;
+
+            if (isZeroBased)
+            {
+                BadgeZeroBased.Text = "Zero-Based Addressing: ON";
+            }
+            else
+            {
+                BadgeZeroBased.Text = "Zero-Based Addressing: OFF (1-Based)";
+            }
+
+            RecalculateModbusAddresses(isZeroBased);
+            _modbusConfig.Save();
+        }
+
+        /// <summary>
+        /// Menghitung ulang seluruh alamat Modbus berdasarkan mode Zero-Based atau 1-Based.
+        /// </summary>
+        private void RecalculateModbusAddresses(bool isZeroBased)
+        {
+            // Coil
+            for (int i = 0; i < ModbusCoilItems.Count; i++)
+            {
+                if (isZeroBased)
+                {
+                    ModbusCoilItems[i].ModbusAddress = ModbusCoilItems[i].No - 1;
+                }
+                else
+                {
+                    ModbusCoilItems[i].ModbusAddress = ModbusCoilItems[i].No;
+                }
+            }
+
+            // Discrete Input
+            for (int i = 0; i < ModbusDiscreteItems.Count; i++)
+            {
+                if (isZeroBased)
+                {
+                    ModbusDiscreteItems[i].ModbusAddress = ModbusDiscreteItems[i].No - 1;
+                }
+                else
+                {
+                    ModbusDiscreteItems[i].ModbusAddress = ModbusDiscreteItems[i].No;
+                }
+            }
+
+            // Holding Register
+            for (int i = 0; i < ModbusHoldingItems.Count; i++)
+            {
+                if (isZeroBased)
+                {
+                    ModbusHoldingItems[i].ModbusAddress = ModbusHoldingItems[i].No - 1;
+                }
+                else
+                {
+                    ModbusHoldingItems[i].ModbusAddress = ModbusHoldingItems[i].No;
+                }
+            }
+
+            // Input Register
+            for (int i = 0; i < ModbusInputItems.Count; i++)
+            {
+                if (isZeroBased)
+                {
+                    ModbusInputItems[i].ModbusAddress = ModbusInputItems[i].No - 1;
+                }
+                else
+                {
+                    ModbusInputItems[i].ModbusAddress = ModbusInputItems[i].No;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handler saat pengguna mengedit kolom Keterangan di tabel Modbus.
+        /// Hasil edit langsung disimpan secara otomatis ke file modbus_config.json.
+        /// </summary>
+        private void DgModbus_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
+        {
+            if (e.Row.Item is ModbusItemModel item)
+            {
+                Dispatcher.InvokeAsync(async () =>
+                {
+                    await Task.Delay(50);
+                    if (!string.IsNullOrEmpty(item.PlcDevice))
+                    {
+                        string key = item.PlcDevice;
+                        if (sender == DgModbusInput)
+                        {
+                            key = "Input_" + item.PlcDevice;
+                        }
+                        else if (sender == DgModbusHolding)
+                        {
+                            key = "Holding_" + item.PlcDevice;
+                        }
+
+                        _modbusConfig.Descriptions[key] = item.Description ?? string.Empty;
+                        _modbusConfig.Save();
+                    }
+                });
+            }
+        }
+
+        /// <summary>
+        /// Memperbarui tampilan kartu kontrol Modbus TCP Server di UI.
+        /// </summary>
+        private void UpdateModbusServerUI()
+        {
+            if (_modbusServer == null)
+            {
+                return;
+            }
+
+            if (_modbusServer.IsRunning)
+            {
+                TxtModbusServerStatus.Text = "MODBUS TCP SERVER: RUNNING (AUTO-STARTED)";
+                TxtModbusServerStatus.Foreground = new SolidColorBrush(Color.FromRgb(4, 120, 87));
+                ModbusStatusLed.Fill = new SolidColorBrush(Color.FromRgb(16, 185, 129));
+                BtnStartModbusServer.Visibility = Visibility.Collapsed;
+                BtnStopModbusServer.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                TxtModbusServerStatus.Text = "MODBUS TCP SERVER: STOPPED";
+                TxtModbusServerStatus.Foreground = new SolidColorBrush(Color.FromRgb(220, 38, 38));
+                ModbusStatusLed.Fill = new SolidColorBrush(Color.FromRgb(239, 68, 68));
+                BtnStartModbusServer.Visibility = Visibility.Visible;
+                BtnStopModbusServer.Visibility = Visibility.Collapsed;
+            }
+
+            TxtModbusRequests.Text = _modbusServer.RequestsProcessed.ToString("N0");
+            TxtModbusClients.Text = _modbusServer.ConnectedClientsCount.ToString();
+            TxtModbusPortHeader.Text = $"(Port {_modbusServer.ActivePort})";
+        }
+
+        private void BtnStartModbusServer_Click(object sender, RoutedEventArgs e)
+        {
+            _modbusServer.Start();
+            UpdateModbusServerUI();
+        }
+
+        private void BtnStopModbusServer_Click(object sender, RoutedEventArgs e)
+        {
+            _modbusServer.Stop();
+            UpdateModbusServerUI();
+        }
+
+        private void BtnModbusPortUp_Click(object sender, RoutedEventArgs e)
+        {
+            if (int.TryParse(TxtModbusPort.Text, out int port))
+            {
+                if (port < 65535)
+                {
+                    port++;
+                    TxtModbusPort.Text = port.ToString();
+                }
+            }
+        }
+
+        private void BtnModbusPortDown_Click(object sender, RoutedEventArgs e)
+        {
+            if (int.TryParse(TxtModbusPort.Text, out int port))
+            {
+                if (port > 1)
+                {
+                    port--;
+                    TxtModbusPort.Text = port.ToString();
+                }
+            }
+        }
+
+        private void TxtModbusPort_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (_isInitializingModbus)
+            {
+                return;
+            }
+
+            if (int.TryParse(TxtModbusPort.Text, out int port))
+            {
+                if (port > 0 && port <= 65535)
+                {
+                    _modbusConfig.Port = port;
+                    TxtModbusPortHeader.Text = $"(Port {port})";
+                    _modbusConfig.Save();
+                }
+            }
+        }
+
+        #endregion
+
         protected override void OnClosed(EventArgs e)
         {
             _pollTimer.Stop();
+            _modbusUiTimer.Stop();
             _mcServer1?.Stop();
             _mcServer2?.Stop();
             _opcDaServer?.Dispose();
+            _opcUaServer?.Dispose();
+            _modbusServer?.Dispose();
             _simEngine?.Dispose();
             base.OnClosed(e);
         }
